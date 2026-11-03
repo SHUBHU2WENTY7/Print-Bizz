@@ -1,69 +1,81 @@
 import type { ComponentType } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { BottomNavigation } from './src/components/BottomNavigation';
 import { FilterModal } from './src/components/FilterModal';
 import { Header } from './src/components/Header';
-import { COLORS, SPACING } from './src/constants/theme';
+import { COLORS } from './src/constants/theme';
+
+import { HomeScreen } from './src/screens/HomeScreen';
+import { ExploreScreen } from './src/screens/ExploreScreen';
+import { ProductDetailsScreen } from './src/screens/ProductDetailsScreen';
+import { CustomizeScreen } from './src/screens/CustomizeScreen';
+import { DocumentUploadScreen } from './src/screens/DocumentUploadScreen';
+import { VirtualBookPreviewScreen } from './src/screens/VirtualBookPreviewScreen';
 import { CartScreen } from './src/screens/CartScreen';
 import { CheckoutScreen } from './src/screens/CheckoutScreen';
-import { CustomizeScreen } from './src/screens/CustomizeScreen';
-import { DocumentPreviewScreen } from './src/screens/DocumentPreviewScreen';
-import { HomeScreen } from './src/screens/HomeScreen';
 import { OrderConfirmationScreen } from './src/screens/OrderConfirmationScreen';
-import { ProductDetailsScreen } from './src/screens/ProductDetailsScreen';
+import { MyOrdersScreen } from './src/screens/MyOrdersScreen';
+import { OrderDetailsScreen } from './src/screens/OrderDetailsScreen';
+import { WishlistScreen } from './src/screens/WishlistScreen';
+import { NotificationsScreen } from './src/screens/NotificationsScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
+import { SavedAddressesScreen } from './src/screens/SavedAddressesScreen';
+import { MyDocumentsScreen } from './src/screens/MyDocumentsScreen';
+import { SupportScreen } from './src/screens/SupportScreen';
+
 import { ScreenName, useAppStore } from './src/store/useAppStore';
 
-const screens: Partial<Record<ScreenName, ComponentType>> = {
+const screens: Record<ScreenName, ComponentType> = {
   home: HomeScreen,
+  explore: ExploreScreen,
   product_details: ProductDetailsScreen,
   customize: CustomizeScreen,
-  document_preview: DocumentPreviewScreen,
+  document_upload: DocumentUploadScreen,
+  book_preview: VirtualBookPreviewScreen,
+  document_preview: VirtualBookPreviewScreen,
   cart: CartScreen,
   checkout: CheckoutScreen,
   order_confirmation: OrderConfirmationScreen,
+  my_orders: MyOrdersScreen,
+  order_details: OrderDetailsScreen,
+  wishlist: WishlistScreen,
+  notifications: NotificationsScreen,
+  profile: ProfileScreen,
+  saved_addresses: SavedAddressesScreen,
+  my_documents: MyDocumentsScreen,
+  support: SupportScreen,
+  search: ExploreScreen,
 };
 
 const screenTitles: Record<ScreenName, string> = {
-  home: 'Home',
+  home: 'Print Bizz',
+  explore: 'Explore Products',
   product_details: 'Product Details',
-  customize: 'Customize Your Book',
-  document_preview: 'Document Preview',
-  cart: 'Your Cart',
+  customize: 'Customize Your Black Book',
+  document_upload: 'Upload Document',
+  book_preview: 'Virtual Black Book Preview',
+  document_preview: 'Virtual Black Book Preview',
+  cart: 'Shopping Cart',
   checkout: 'Checkout',
   order_confirmation: 'Order Confirmation',
   my_orders: 'My Orders',
-  order_tracking: 'Order Tracking',
-  profile: 'Profile',
-  search: 'Explore',
+  order_details: 'Order Details',
+  wishlist: 'My Wishlist',
+  notifications: 'Notifications',
+  profile: 'Profile & Account',
+  saved_addresses: 'Saved Addresses',
+  my_documents: 'My Documents',
   support: 'Help & Support',
+  search: 'Search Products',
 };
 
-const tabScreens: ScreenName[] = ['home', 'search', 'my_orders', 'order_tracking', 'profile'];
-
-function UnavailableScreen({ screen }: { screen: ScreenName }) {
-  const navigateTo = useAppStore((state) => state.navigateTo);
-
-  return (
-    <View style={styles.unavailable}>
-      <Text style={styles.unavailableTitle}>{screenTitles[screen]}</Text>
-      <Text style={styles.unavailableMessage}>
-        This section is not available in the app preview yet.
-      </Text>
-      <TouchableOpacity
-        accessibilityRole="button"
-        onPress={() => navigateTo('home')}
-        style={styles.homeButton}
-      >
-        <Text style={styles.homeButtonText}>Back to home</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
+// Bottom tabs navigation is shown on these primary screens
+const tabScreens: ScreenName[] = ['home', 'explore', 'wishlist', 'my_orders', 'profile', 'search'];
 
 export default function App() {
   const currentScreen = useAppStore((state) => state.currentScreen);
-  const Screen = screens[currentScreen];
+  const Screen = screens[currentScreen] || HomeScreen;
   const isConfirmation = currentScreen === 'order_confirmation';
 
   return (
@@ -73,12 +85,12 @@ export default function App() {
         <Header
           title={currentScreen === 'home' ? undefined : screenTitles[currentScreen]}
           showBack={currentScreen !== 'home'}
-          showSearch={currentScreen === 'home' || currentScreen === 'search'}
-          showFilter={currentScreen === 'search'}
+          showSearch={currentScreen === 'home' || currentScreen === 'explore' || currentScreen === 'search'}
+          showFilter={currentScreen === 'explore' || currentScreen === 'search'}
         />
       )}
       <View style={styles.content}>
-        {Screen ? <Screen /> : <UnavailableScreen screen={currentScreen} />}
+        <Screen />
       </View>
       {tabScreens.includes(currentScreen) && <BottomNavigation />}
       <FilterModal />
@@ -94,33 +106,5 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-  },
-  unavailable: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: SPACING.xl,
-  },
-  unavailableTitle: {
-    color: COLORS.navy,
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: SPACING.sm,
-  },
-  unavailableMessage: {
-    color: COLORS.secondaryText,
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  homeButton: {
-    backgroundColor: COLORS.navy,
-    borderRadius: 10,
-    marginTop: SPACING.lg,
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: SPACING.md,
-  },
-  homeButtonText: {
-    color: COLORS.white,
-    fontWeight: '700',
   },
 });

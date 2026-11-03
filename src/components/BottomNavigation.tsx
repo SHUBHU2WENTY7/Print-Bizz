@@ -36,7 +36,7 @@ export const BottomNavigation: React.FC = () => {
     },
     {
       name: 'Explore',
-      screen: 'search',
+      screen: 'explore',
       icon: (active) => (
         <Compass 
           size={22} 
@@ -44,6 +44,19 @@ export const BottomNavigation: React.FC = () => {
           strokeWidth={active ? 2.5 : 2} 
         />
       ),
+    },
+    {
+      name: 'Wishlist',
+      screen: 'wishlist',
+      icon: (active) => (
+        <Heart 
+          size={22} 
+          color={active ? COLORS.darkOrange : COLORS.secondaryText} 
+          strokeWidth={active ? 2.5 : 2}
+          fill={active ? COLORS.darkOrange : 'transparent'} 
+        />
+      ),
+      badgeCount: wishlist.length > 0 ? wishlist.length : undefined,
     },
     {
       name: 'My Orders',
@@ -56,19 +69,6 @@ export const BottomNavigation: React.FC = () => {
         />
       ),
       badgeCount: activeOrdersCount > 0 ? activeOrdersCount : undefined,
-    },
-    {
-      name: 'Wishlist',
-      screen: 'product_details',
-      icon: (active) => (
-        <Heart 
-          size={22} 
-          color={active ? COLORS.navy : COLORS.secondaryText} 
-          strokeWidth={active ? 2.5 : 2}
-          fill={active ? COLORS.navy : 'transparent'} 
-        />
-      ),
-      badgeCount: wishlist.length > 0 ? wishlist.length : undefined,
     },
     {
       name: 'Profile',
@@ -87,10 +87,7 @@ export const BottomNavigation: React.FC = () => {
     <View style={styles.outerWrapper}>
       <View style={styles.navBar}>
         {tabs.map((tab) => {
-          const isActive = 
-            currentScreen === tab.screen || 
-            (tab.screen === 'search' && currentScreen === 'customize') ||
-            (tab.screen === 'my_orders' && (currentScreen === 'order_tracking' || currentScreen === 'order_confirmation'));
+          const isActive = currentScreen === tab.screen;
 
           return (
             <TouchableOpacity
@@ -133,11 +130,11 @@ const styles = StyleSheet.create({
   navBar: {
     flexDirection: 'row',
     backgroundColor: COLORS.white,
-    borderRadius: RADIUS.xl,
-    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.full,
+    paddingVertical: SPACING.xs + 2,
     paddingHorizontal: SPACING.md,
     width: '100%',
-    maxWidth: 600,
+    maxWidth: 580,
     justifyContent: 'space-around',
     alignItems: 'center',
     borderWidth: 1,
@@ -162,7 +159,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
   },
   activeIconContainer: {
-    backgroundColor: COLORS.lightBlue,
+    backgroundColor: '#F1F5F9',
   },
   tabLabel: {
     fontSize: 11,
@@ -184,7 +181,7 @@ const styles = StyleSheet.create({
   tabBadge: {
     position: 'absolute',
     top: 0,
-    right: -2,
+    right: -3,
     backgroundColor: COLORS.darkOrange,
     minWidth: 15,
     height: 15,

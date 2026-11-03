@@ -117,14 +117,14 @@ export const BarcodeView: React.FC<BarcodeViewProps> = ({
               ))}
             </View>
           </View>
-          <Text style={styles.qrCaption}>Scan at Thane Hub or Mumbai Courier Arrival</Text>
+          <Text style={styles.qrCaption}>Scan upon Courier Arrival for Doorstep Verification</Text>
         </View>
       )}
 
       {/* Token Details & Copy */}
       <View style={styles.tokenRow}>
         <View style={styles.tokenInfo}>
-          <Text style={styles.tokenLabel}>Opaque Verification Token</Text>
+          <Text style={styles.tokenLabel}>Verification Token</Text>
           <Text style={styles.tokenValue} numberOfLines={1}>
             {verificationToken}
           </Text>
@@ -142,7 +142,7 @@ export const BarcodeView: React.FC<BarcodeViewProps> = ({
       </View>
 
       <Text style={styles.disclaimer}>
-        Staff Verification Only • Single-use upon Goa factory dispatch & Thane hub inward scan. Not proof of payment.
+        Courier Verification • Single-use upon doorstep delivery verification scan.
       </Text>
     </View>
   );

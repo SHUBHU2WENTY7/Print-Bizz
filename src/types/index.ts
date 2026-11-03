@@ -1,4 +1,4 @@
-export type PaperSize = 'A4';
+export type PaperSize = 'A4' | 'A3';
 
 export type PaperGSM = '75 GSM Standard' | '80 GSM Bond' | '100 GSM Executive' | '120 GSM Royal';
 
@@ -12,6 +12,8 @@ export type BindingType =
   | 'Golden Embossed Hardcover (Standard)'
   | 'Silver Foil Embossed Hardcover'
   | 'Premium Leatherette Rexine'
+  | 'Wire-O Spiral Binding'
+  | 'Softcover Perfect Binding'
   | 'Executive Matte Obsidian';
 
 export interface CoverCustomization {
@@ -24,7 +26,8 @@ export interface CoverCustomization {
   guideName: string;
   spineText: string;
   coverColor: 'Classic Midnight Black' | 'Royal Navy Blue' | 'Deep Maroon' | 'Dark Emerald';
-  embossingFoil: 'Gold Foil' | 'Silver Foil';
+  embossingFoil: 'Gold Foil' | 'Silver Foil' | 'Rose Gold';
+  finish: 'Matte Laminated' | 'Gloss Laminated';
 }
 
 export interface AddOnOption {
@@ -46,6 +49,11 @@ export interface UploadedDocument {
   status: 'uploading' | 'validating' | 'ready' | 'error';
   validationMessage?: string;
   previewPages: string[]; // Mock page titles or previews
+  isRealFile?: boolean;
+  fileType?: string; // pdf | docx | doc
+  dataUrl?: string; // Object URL or Base64 data for real preview
+  renderedPages?: string[]; // Rendered image URLs / HTML pages of actual document
+  extractedText?: string[]; // Actual page text extracted from PDF or Word
 }
 
 export interface BlackBookProduct {
@@ -54,8 +62,10 @@ export interface BlackBookProduct {
   tagline: string;
   description: string;
   detailedDescription: string;
+  category: 'Black Books' | 'Project Books' | 'Thesis Binding' | 'Spiral Binding' | 'Hardcover Binding' | 'Printing Services' | 'Stationery';
   badge?: string;
   startingPrice: number;
+  originalPrice: number;
   basePagesIncluded: number;
   image: string;
   gallery: string[];
@@ -66,11 +76,14 @@ export interface BlackBookProduct {
     paperOptions: string;
     binding: string;
     turnaround: string;
-    manufacturingHub: string;
-    dispatchHub: string;
+    estimatedDelivery: string;
+    compliance: string;
+    manufacturingHub?: string;
+    dispatchHub?: string;
   };
   features: string[];
   popularFor: string;
+  inStock?: boolean;
 }
 
 export interface CustomizationState {
@@ -122,13 +135,12 @@ export interface CartItem {
 export type OrderTrackingStageId =
   | 'order_placed'
   | 'payment_confirmed'
-  | 'sent_to_goa'
+  | 'file_verified'
   | 'printing_progress'
   | 'binding_finishing'
   | 'quality_check'
   | 'packed'
-  | 'dispatched_thane'
-  | 'received_thane_hub'
+  | 'dispatched'
   | 'out_for_delivery'
   | 'delivered';
 
@@ -169,8 +181,8 @@ export interface Order {
   paymentMethod: 'UPI' | 'Cards' | 'Net Banking' | 'Cash on Delivery';
   paymentStatus: 'PAID' | 'PENDING' | 'REFUNDED';
   transactionId: string;
-  orderStatus: 'Processing' | 'In Production (Goa)' | 'In Transit (Thane Hub)' | 'Out for Delivery (Mumbai)' | 'Delivered' | 'Cancelled';
-  barcodeToken: string; // Opaque verification credential
+  orderStatus: 'Processing' | 'Printing' | 'Binding' | 'Shipped' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
+  barcodeToken: string;
   stages: TrackingStage[];
 }
 
@@ -180,5 +192,15 @@ export interface FilterState {
   maxPrice: number;
   paperGSM: string;
   bindingType: string;
-  sortBy: 'popular' | 'price_low' | 'price_high' | 'fastest';
+  sortBy: 'popular' | 'price_low' | 'price_high' | 'rating' | 'fastest';
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  date: string;
+  read: boolean;
+  type: 'order' | 'offer' | 'info';
+  linkScreen?: string;
 }

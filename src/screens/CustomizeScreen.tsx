@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -6,34 +6,39 @@ import {
   ScrollView, 
   TouchableOpacity, 
   TextInput, 
-  Platform 
+  Platform,
+  ActivityIndicator,
+  Image 
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
-import { StickyActionBar } from '../components/StickyActionBar';
-import { api } from '../services/apiService';
+import { BLACK_BOOK_PRODUCTS } from '../constants/products';
+import { processUploadedFile } from '../services/documentService';
 import { 
+  Check, 
   UploadCloud, 
   FileText, 
   CheckCircle2, 
   Trash2, 
   Eye, 
-  RefreshCw, 
-  Sliders, 
-  BookMarked, 
-  Palette, 
+  RotateCcw, 
+  Sparkles, 
   Layers, 
+  Sliders, 
   Plus, 
   Minus, 
-  Check, 
+  ChevronRight, 
+  ChevronLeft,
+  ArrowRight,
+  ShieldCheck,
   AlertCircle,
-  Sparkles,
-  Info
+  HelpCircle
 } from 'lucide-react-native';
 
 export const CustomizeScreen: React.FC = () => {
   const { 
     selectedProduct, 
+    selectProduct,
     customization, 
     updateCustomization, 
     uploadedDocument, 
@@ -45,32 +50,36 @@ export const CustomizeScreen: React.FC = () => {
     addToCart 
   } = useAppStore();
 
-  const [activeTab, setActiveTab] = useState<'specs' | 'cover' | 'addons'>('specs');
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState<boolean>(false);
 
-  // Simulated PDF Document Picker
-  const handlePickDocument = async () => {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const steps = [
+    { num: 1, title: 'Choose Product', subtitle: 'Select academic style' },
+    { num: 2, title: 'Upload Document', subtitle: 'PDF, DOC, DOCX' },
+    { num: 3, title: 'Print Options', subtitle: 'Paper, GSM & Color' },
+    { num: 4, title: 'Binding & Cover', subtitle: 'Foil, Spine & Stamping' },
+    { num: 5, title: 'Quantity', subtitle: 'Copies & Discounts' },
+    { num: 6, title: 'Summary & Price', subtitle: 'Live Calculation' },
+  ];
+
+  const handleFileSelected = async (file: File) => {
+    if (!file) return;
     setIsUploading(true);
+    setUploadError(null);
     try {
-      const mockSampleFiles = [
-        { name: 'Final_Capstone_Thesis_VJTI_2026.pdf', size: 5.2 * 1024 * 1024 },
-        { name: 'BlackBook_AI_SupplyChain_Draft_v4.pdf', size: 7.8 * 1024 * 1024 },
-        { name: 'Engineering_Project_Report_Final.pdf', size: 4.1 * 1024 * 1024 },
-      ];
-      const picked = mockSampleFiles[Math.floor(Math.random() * mockSampleFiles.length)];
-      const uploaded = await api.uploadPdfFile(picked);
-      setUploadedDocument(uploaded);
-    } catch (err) {
-      alert('Upload failed. Please ensure file is a valid PDF under 50MB.');
+      const doc = await processUploadedFile(file);
+      setUploadedDocument(doc);
+    } catch (err: any) {
+      setUploadError(err.message || 'Error processing document');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleRemoveDoc = () => {
-    setUploadedDocument(null);
-  };
-
-  const handleCoverChange = (field: keyof typeof customization.cover, val: string) => {
+  const handleCoverTextChange = (field: keyof typeof customization.cover, val: string) => {
     updateCustomization({
       cover: {
         ...customization.cover,
@@ -79,598 +88,722 @@ export const CustomizeScreen: React.FC = () => {
     });
   };
 
-  const handleAddOnToggle = (addonKey: keyof typeof customization.addOns) => {
+  const handleAddOnToggle = (key: keyof typeof customization.addOns) => {
     updateCustomization({
       addOns: {
         ...customization.addOns,
-        [addonKey]: !customization.addOns[addonKey],
+        [key]: !customization.addOns[key],
       },
     });
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
-        <View style={styles.contentWrap}>
-          {/* Header Title & Product Info */}
-          <View style={styles.headerBanner}>
-            <Text style={styles.productTag}>{selectedProduct.name}</Text>
-            <Text style={styles.screenHeading}>Customization Studio</Text>
-            <Text style={styles.screenSubheading}>
-              Configure your Black Book to exact university guidelines. Instant dynamic pricing.
-            </Text>
-          </View>
+      {/* Hidden Web File Input */}
+      {Platform.OS === 'web' && (
+        <input 
+          type="file"
+          ref={fileInputRef as any}
+          style={{ display: 'none' }}
+          accept=".pdf,.doc,.docx"
+          onChange={(e) => {
+            const f = e.target?.files?.[0];
+            if (f) handleFileSelected(f);
+          }}
+        />
+      )}
 
-          {/* SECTION A: DOCUMENT UPLOAD (Prioritized PDF Support) */}
-          <View style={styles.cardSection}>
-            <View style={styles.cardSectionHeader}>
-              <View style={styles.iconCircle}>
-                <UploadCloud size={20} color={COLORS.navy} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.sectionTitle}>Section A — Document Upload</Text>
-                <Text style={styles.sectionSubtitle}>PDF files only (Strict vector & font embedding check)</Text>
-              </View>
-            </View>
-
-            {uploadedDocument ? (
-              <View style={styles.uploadedDocCard}>
-                <View style={styles.docRow}>
-                  <View style={styles.pdfIconWrap}>
-                    <FileText size={28} color={COLORS.darkOrange} />
-                  </View>
-                  <View style={styles.docInfo}>
-                    <Text style={styles.docName} numberOfLines={1}>{uploadedDocument.name}</Text>
-                    <Text style={styles.docMeta}>
-                      {(uploadedDocument.size / (1024 * 1024)).toFixed(2)} MB • {uploadedDocument.pageCount} Pages ({uploadedDocument.colorPageCount} Color, {uploadedDocument.bwPageCount} B&W)
-                    </Text>
-                    <View style={styles.verifiedRow}>
-                      <CheckCircle2 size={13} color={COLORS.success} />
-                      <Text style={styles.verifiedText}>Preflight Passed: A4 Margins Validated</Text>
-                    </View>
-                  </View>
-                </View>
-
-                {/* Document Actions */}
-                <View style={styles.docActionsRow}>
-                  <TouchableOpacity 
-                    style={styles.docActionBtn}
-                    onPress={() => navigateTo('document_preview')}
-                  >
-                    <Eye size={15} color={COLORS.oceanBlue} />
-                    <Text style={styles.docActionBtnText}>Preview PDF</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity 
-                    style={styles.docActionBtn}
-                    onPress={handlePickDocument}
-                  >
-                    <RefreshCw size={15} color={COLORS.navy} />
-                    <Text style={[styles.docActionBtnText, { color: COLORS.navy }]}>Replace</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity 
-                    style={[styles.docActionBtn, styles.removeBtn]}
-                    onPress={handleRemoveDoc}
-                  >
-                    <Trash2 size={15} color={COLORS.error} />
-                    <Text style={[styles.docActionBtnText, { color: COLORS.error }]}>Remove</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : (
-              <TouchableOpacity 
-                style={styles.uploadDropzone}
-                onPress={handlePickDocument}
-                activeOpacity={0.8}
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <View style={styles.uploadingBox}>
-                    <RefreshCw size={24} color={COLORS.oceanBlue} />
-                    <Text style={styles.uploadingText}>Scanning PDF & calculating pages...</Text>
-                  </View>
-                ) : (
-                  <>
-                    <View style={styles.uploadIconBubble}>
-                      <UploadCloud size={30} color={COLORS.oceanBlue} />
-                    </View>
-                    <Text style={styles.uploadTitle}>Tap to Upload Project PDF</Text>
-                    <Text style={styles.uploadDesc}>
-                      Supports PDF up to 50MB. Auto-detects total pages and color charts.
-                    </Text>
-                    <View style={styles.uploadBtnPlaceholder}>
-                      <Text style={styles.uploadBtnText}>Select PDF File</Text>
-                    </View>
-                  </>
-                )}
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Navigation Sub-Tabs: Specs vs Cover vs Add-ons */}
-          <View style={styles.tabsBar}>
-            {[
-              { id: 'specs', label: '1. Print Specifications' },
-              { id: 'cover', label: '2. Cover & Embossing' },
-              { id: 'addons', label: '3. Add-Ons & Finishing' },
-            ].map((tab) => (
+      {/* Subway Stepper Navigation Bar */}
+      <View style={styles.stepperContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stepperScroll}>
+          {steps.map((st) => {
+            const isCompleted = currentStep > st.num;
+            const isCurrent = currentStep === st.num;
+            return (
               <TouchableOpacity
-                key={tab.id}
-                style={[styles.subTab, activeTab === tab.id && styles.subTabActive]}
-                onPress={() => setActiveTab(tab.id as any)}
+                key={st.num}
+                style={[
+                  styles.stepItem,
+                  isCurrent && styles.stepItemCurrent,
+                  isCompleted && styles.stepItemCompleted,
+                ]}
+                onPress={() => setCurrentStep(st.num)}
+                activeOpacity={0.8}
               >
-                <Text style={[styles.subTabText, activeTab === tab.id && styles.subTabTextActive]}>
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* TAB 1: PRINT SPECIFICATIONS */}
-          {activeTab === 'specs' && (
-            <View style={styles.specificationsStack}>
-              {/* SECTION B: PAPER SIZE */}
-              <View style={styles.cardSection}>
-                <Text style={styles.groupLabel}>SECTION B — PAPER SIZE</Text>
-                <View style={styles.singleChoiceRow}>
-                  <View style={[styles.choiceCard, styles.choiceCardSelected]}>
-                    <View style={styles.choiceHeader}>
-                      <Text style={styles.choiceTitle}>Standard A4 (210 x 297 mm)</Text>
-                      <Check size={16} color={COLORS.oceanBlue} />
-                    </View>
-                    <Text style={styles.choiceDesc}>
-                      Configured manufacturing standard for all university Black Book submissions.
+                <View style={[
+                  styles.stepBadge,
+                  isCurrent && styles.stepBadgeCurrent,
+                  isCompleted && styles.stepBadgeCompleted,
+                ]}>
+                  {isCompleted ? (
+                    <Check size={12} color={COLORS.white} strokeWidth={3} />
+                  ) : (
+                    <Text style={[styles.stepNum, isCurrent && styles.stepNumCurrent]}>
+                      {st.num}
                     </Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* SECTION C: PAPER QUALITY (GSM) */}
-              <View style={styles.cardSection}>
-                <Text style={styles.groupLabel}>SECTION C — PAPER QUALITY (GSM)</Text>
-                <View style={styles.optionsList}>
-                  {[
-                    { gsm: '75 GSM Standard', extra: '+₹0', desc: 'Lightweight crisp paper, suitable for drafts & standard reports' },
-                    { gsm: '80 GSM Bond', extra: '+₹25/copy', desc: 'University recommended bond paper with zero show-through' },
-                    { gsm: '100 GSM Executive', extra: '+₹55/copy', desc: 'Heavyweight smooth executive finish, archival quality' },
-                    { gsm: '120 GSM Royal', extra: '+₹95/copy', desc: 'Ultra-luxurious heavyweight paper for VIP external examiners' },
-                  ].map((item) => {
-                    const isSelected = customization.paperGSM === item.gsm;
-                    return (
-                      <TouchableOpacity
-                        key={item.gsm}
-                        style={[styles.optionRowCard, isSelected && styles.optionRowCardSelected]}
-                        onPress={() => updateCustomization({ paperGSM: item.gsm as any })}
-                      >
-                        <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
-                          {isSelected && <View style={styles.radioDot} />}
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <View style={styles.optionTitleRow}>
-                            <Text style={[styles.optionName, isSelected && styles.optionNameSelected]}>
-                              {item.gsm}
-                            </Text>
-                            <Text style={styles.optionExtraPrice}>{item.extra}</Text>
-                          </View>
-                          <Text style={styles.optionDesc}>{item.desc}</Text>
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* SECTION D: PRINT TYPE */}
-              <View style={styles.cardSection}>
-                <Text style={styles.groupLabel}>SECTION D — PRINT TYPE</Text>
-                <View style={styles.optionsGrid}>
-                  {[
-                    { type: 'Black & White', desc: 'Deep black carbon laser prints for text and tables' },
-                    { type: 'Mixed (B&W + Colour)', desc: 'Smart split: charts & images in color, rest in B&W' },
-                    { type: 'Full Colour', desc: 'Full high-definition digital laser press color throughout' },
-                  ].map((item) => {
-                    const isSelected = customization.printType === item.type;
-                    return (
-                      <TouchableOpacity
-                        key={item.type}
-                        style={[styles.gridOptionCard, isSelected && styles.gridOptionCardSelected]}
-                        onPress={() => updateCustomization({ printType: item.type as any })}
-                      >
-                        <View style={styles.gridOptionHeader}>
-                          <Text style={[styles.gridOptionTitle, isSelected && styles.gridOptionTitleSelected]}>
-                            {item.type}
-                          </Text>
-                          {isSelected && <Check size={16} color={COLORS.navy} />}
-                        </View>
-                        <Text style={styles.gridOptionDesc}>{item.desc}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* SECTION E: PRINT SIDES */}
-              <View style={styles.cardSection}>
-                <Text style={styles.groupLabel}>SECTION E — PRINT SIDES</Text>
-                <View style={styles.twoColumnRow}>
-                  {[
-                    { sides: 'Double-Sided (Recommended)', desc: 'Standard book format. Saves volume & spine bulk.' },
-                    { sides: 'Single-Sided', desc: 'Single face printing for specific institutional requests.' },
-                  ].map((item) => {
-                    const isSelected = customization.printSides === item.sides;
-                    return (
-                      <TouchableOpacity
-                        key={item.sides}
-                        style={[styles.halfCard, isSelected && styles.halfCardSelected]}
-                        onPress={() => updateCustomization({ printSides: item.sides as any })}
-                      >
-                        <View style={styles.gridOptionHeader}>
-                          <Text style={[styles.gridOptionTitle, isSelected && styles.gridOptionTitleSelected]}>
-                            {item.sides}
-                          </Text>
-                          {isSelected && <Check size={16} color={COLORS.navy} />}
-                        </View>
-                        <Text style={styles.gridOptionDesc}>{item.desc}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* SECTION F: PAGE SELECTION */}
-              <View style={styles.cardSection}>
-                <Text style={styles.groupLabel}>SECTION F — PAGE SELECTION</Text>
-                <View style={styles.pillSelectorRow}>
-                  {['All Pages', 'Custom Page Range'].map((p) => {
-                    const isSelected = customization.pageSelection === p;
-                    return (
-                      <TouchableOpacity
-                        key={p}
-                        style={[styles.pillBtn, isSelected && styles.pillBtnSelected]}
-                        onPress={() => updateCustomization({ pageSelection: p as any })}
-                      >
-                        <Text style={[styles.pillBtnText, isSelected && styles.pillBtnTextSelected]}>
-                          {p}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-                {customization.pageSelection === 'Custom Page Range' && (
-                  <View style={styles.customRangeInputWrap}>
-                    <Text style={styles.inputLabel}>Enter page range (e.g., 1-45, 48, 52-80):</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      value={customization.customPageRange}
-                      onChangeText={(val) => updateCustomization({ customPageRange: val })}
-                      placeholder="e.g. 1-80"
-                      placeholderTextColor={COLORS.mutedText}
-                    />
-                  </View>
-                )}
-              </View>
-
-              {/* SECTION H: BINDING & FOIL */}
-              <View style={styles.cardSection}>
-                <Text style={styles.groupLabel}>SECTION H — BINDING & EMBOSSING FINISH</Text>
-                <View style={styles.optionsList}>
-                  {[
-                    { bind: 'Golden Embossed Hardcover (Standard)', extra: '+₹0', badge: 'University Standard' },
-                    { bind: 'Silver Foil Embossed Hardcover', extra: '+₹30', badge: 'Sleek Metallic' },
-                    { bind: 'Premium Leatherette Rexine', extra: '+₹110', badge: 'Handcrafted Deluxe' },
-                    { bind: 'Executive Matte Obsidian', extra: '+₹140', badge: 'Masterpiece Capstone' },
-                  ].map((item) => {
-                    const isSelected = customization.binding === item.bind;
-                    return (
-                      <TouchableOpacity
-                        key={item.bind}
-                        style={[styles.bindingCard, isSelected && styles.bindingCardSelected]}
-                        onPress={() => updateCustomization({ binding: item.bind as any })}
-                      >
-                        <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
-                          {isSelected && <View style={styles.radioDot} />}
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <View style={styles.optionTitleRow}>
-                            <Text style={[styles.bindingTitle, isSelected && styles.bindingTitleSelected]}>
-                              {item.bind}
-                            </Text>
-                            <Text style={styles.optionExtraPrice}>{item.extra}</Text>
-                          </View>
-                          <View style={styles.bindingBadge}>
-                            <Text style={styles.bindingBadgeText}>{item.badge}</Text>
-                          </View>
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-            </View>
-          )}
-
-          {/* TAB 2: COVER CUSTOMIZATION */}
-          {activeTab === 'cover' && (
-            <View style={styles.cardSection}>
-              <View style={styles.cardSectionHeader}>
-                <View style={styles.iconCircle}>
-                  <Palette size={20} color={COLORS.navy} />
+                  )}
                 </View>
                 <View>
-                  <Text style={styles.sectionTitle}>Section I — Cover Stamping Details</Text>
-                  <Text style={styles.sectionSubtitle}>
-                    Heated brass stamp die imprints directly onto front cover & spine.
+                  <Text style={[styles.stepTitle, isCurrent && styles.stepTitleCurrent]}>
+                    {st.title}
+                  </Text>
+                  <Text style={styles.stepSubtitle}>{st.subtitle}</Text>
+                </View>
+                {st.num < 6 && <ChevronRight size={14} color={COLORS.mutedText} style={{ marginLeft: 8 }} />}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Main 2-Column Customization Layout */}
+      <ScrollView style={styles.scrollArea} showsVerticalScrollIndicator={false}>
+        <View style={styles.bodyWrap}>
+          {/* Left / Main: Step Configuration Area */}
+          <View style={styles.configurationArea}>
+            {/* STEP 1: CHOOSE PRODUCT */}
+            {currentStep === 1 && (
+              <View style={styles.stepCard}>
+                <View style={styles.stepHeader}>
+                  <Text style={styles.stepHeading}>Step 1: Choose Academic Product</Text>
+                  <Text style={styles.stepSubtext}>
+                    Select your base book type formatted to university guidelines.
+                  </Text>
+                </View>
+
+                <View style={styles.productListGrid}>
+                  {BLACK_BOOK_PRODUCTS.map((prod) => {
+                    const isSelected = selectedProduct.id === prod.id;
+                    return (
+                      <TouchableOpacity
+                        key={prod.id}
+                        style={[styles.productOptionCard, isSelected && styles.productOptionCardSelected]}
+                        onPress={() => selectProduct(prod.id)}
+                        activeOpacity={0.85}
+                      >
+                        <Image source={{ uri: prod.image }} style={styles.prodThumb} />
+                        <View style={styles.prodInfo}>
+                          <View style={styles.prodRow}>
+                            <Text style={styles.prodName}>{prod.name}</Text>
+                            {isSelected && (
+                              <View style={styles.selectedPill}>
+                                <Check size={11} color={COLORS.white} />
+                                <Text style={styles.selectedPillText}>Selected</Text>
+                              </View>
+                            )}
+                          </View>
+                          <Text style={styles.prodTagline}>{prod.tagline}</Text>
+                          <Text style={styles.prodPrice}>From ₹{prod.startingPrice}/copy</Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* STEP 2: UPLOAD DOCUMENT */}
+            {currentStep === 2 && (
+              <View style={styles.stepCard}>
+                <View style={styles.stepHeader}>
+                  <Text style={styles.stepHeading}>Step 2: Upload Your Document</Text>
+                  <Text style={styles.stepSubtext}>
+                    Upload your actual PDF, DOC, or DOCX document. We strictly verify margins, font embedding, and pagination.
+                  </Text>
+                </View>
+
+                {uploadedDocument ? (
+                  <View style={styles.uploadedFileCard}>
+                    <View style={styles.uploadedFileRow}>
+                      <View style={styles.pdfIconBox}>
+                        <FileText size={28} color={COLORS.darkOrange} />
+                      </View>
+                      <View style={styles.uploadedFileMeta}>
+                        <Text style={styles.uploadedFileName} numberOfLines={1}>
+                          {uploadedDocument.name}
+                        </Text>
+                        <Text style={styles.uploadedFileSize}>
+                          {(uploadedDocument.size / (1024 * 1024)).toFixed(2)} MB • {uploadedDocument.pageCount} Pages ({uploadedDocument.colorPageCount} Color, {uploadedDocument.bwPageCount} B&W)
+                        </Text>
+                        <View style={styles.verifiedRow}>
+                          <CheckCircle2 size={13} color={COLORS.success} />
+                          <Text style={styles.verifiedText}>
+                            {uploadedDocument.validationMessage || 'PDF preflight verified • Ready for printing'}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Actions */}
+                    <View style={styles.uploadActionsRow}>
+                      <TouchableOpacity 
+                        style={styles.actionBtnSecondary}
+                        onPress={() => navigateTo('book_preview')}
+                      >
+                        <Eye size={15} color={COLORS.navy} />
+                        <Text style={styles.actionBtnSecondaryText}>Open Book Preview</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity 
+                        style={styles.actionBtnSecondary}
+                        onPress={() => {
+                          if (Platform.OS === 'web') fileInputRef.current?.click();
+                        }}
+                      >
+                        <RotateCcw size={15} color={COLORS.navy} />
+                        <Text style={styles.actionBtnSecondaryText}>Replace File</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity 
+                        style={styles.actionBtnDelete}
+                        onPress={() => setUploadedDocument(null)}
+                      >
+                        <Trash2 size={15} color={COLORS.error} />
+                        <Text style={styles.actionBtnDeleteText}>Remove</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.dropZone}>
+                    {isUploading ? (
+                      <View style={styles.uploadingState}>
+                        <ActivityIndicator size="large" color={COLORS.darkOrange} />
+                        <Text style={styles.uploadingText}>Verifying preflight margins & pages...</Text>
+                      </View>
+                    ) : (
+                      <>
+                        <UploadCloud size={46} color={COLORS.darkOrange} />
+                        <Text style={styles.dropZoneTitle}>Select your Project Document</Text>
+                        <Text style={styles.dropZoneSub}>
+                          Accepts PDF, DOC, DOCX up to 100MB
+                        </Text>
+                        <TouchableOpacity 
+                          style={styles.browseFilesBtn}
+                          onPress={() => {
+                            if (Platform.OS === 'web') fileInputRef.current?.click();
+                          }}
+                        >
+                          <UploadCloud size={16} color={COLORS.white} />
+                          <Text style={styles.browseFilesBtnText}>Browse Files</Text>
+                        </TouchableOpacity>
+                        {uploadError && <Text style={styles.errorBanner}>{uploadError}</Text>}
+                      </>
+                    )}
+                  </View>
+                )}
+
+                <View style={styles.preflightNoticeBox}>
+                  <ShieldCheck size={18} color={COLORS.oceanBlue} />
+                  <Text style={styles.preflightNoticeText}>
+                    Authentic Guarantee: We never generate mock pages. Your actual document will be rendered directly in the virtual black book preview.
                   </Text>
                 </View>
               </View>
+            )}
 
-              {/* Cover Color & Foil Swatches */}
-              <View style={styles.coverColorBlock}>
-                <Text style={styles.inputLabel}>Cover Rexine Material</Text>
-                <View style={styles.swatchSelectorRow}>
+            {/* STEP 3: CONFIGURE PRINTING */}
+            {currentStep === 3 && (
+              <View style={styles.stepCard}>
+                <View style={styles.stepHeader}>
+                  <Text style={styles.stepHeading}>Step 3: Configure Printing Specifications</Text>
+                  <Text style={styles.stepSubtext}>
+                    Select paper size, GSM weight, monochrome or full color, and page orientation.
+                  </Text>
+                </View>
+
+                {/* Paper Size */}
+                <Text style={styles.fieldSectionLabel}>Paper Size</Text>
+                <View style={styles.optionsRow}>
                   {[
-                    { label: 'Classic Midnight Black', hex: '#111827' },
-                    { label: 'Royal Navy Blue', hex: '#10233F' },
-                    { label: 'Deep Maroon', hex: '#581C87' },
-                  ].map((col) => {
-                    const isSel = customization.cover.coverColor === col.label;
-                    return (
-                      <TouchableOpacity
-                        key={col.label}
-                        style={[styles.colorChip, isSel && styles.colorChipSelected]}
-                        onPress={() => handleCoverChange('coverColor', col.label as any)}
-                      >
-                        <View style={[styles.colorSquare, { backgroundColor: col.hex }]} />
-                        <Text style={[styles.colorChipText, isSel && styles.colorChipTextSelected]}>
-                          {col.label.split(' ')[0]} {col.label.split(' ')[1]}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                    { id: 'A4', title: 'Standard A4', desc: '210 x 297 mm (Universal standard for submissions)' },
+                    { id: 'A3', title: 'Large A3', desc: '297 x 420 mm (Architectural & drawing folios)' },
+                  ].map((sz) => (
+                    <TouchableOpacity
+                      key={sz.id}
+                      style={[styles.specOptionPill, customization.paperSize === sz.id && styles.specOptionPillActive]}
+                      onPress={() => updateCustomization({ paperSize: sz.id as any })}
+                    >
+                      <Text style={[styles.specOptionTitle, customization.paperSize === sz.id && styles.specOptionTitleActive]}>
+                        {sz.title}
+                      </Text>
+                      <Text style={styles.specOptionDesc}>{sz.desc}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Paper GSM */}
+                <Text style={styles.fieldSectionLabel}>Paper GSM (Thickness & Opacity)</Text>
+                <View style={styles.optionsGrid}>
+                  {[
+                    { id: '75 GSM Standard', label: '75 GSM Standard', note: 'Standard office print' },
+                    { id: '80 GSM Bond', label: '80 GSM Premium Bond', note: 'Recommended standard for Black Books (+₹25)' },
+                    { id: '100 GSM Executive', label: '100 GSM Royal Bond', note: 'Heavyweight archival quality (+₹55)' },
+                  ].map((gsm) => (
+                    <TouchableOpacity
+                      key={gsm.id}
+                      style={[styles.specOptionPill, customization.paperGSM === gsm.id && styles.specOptionPillActive]}
+                      onPress={() => updateCustomization({ paperGSM: gsm.id as any })}
+                    >
+                      <Text style={[styles.specOptionTitle, customization.paperGSM === gsm.id && styles.specOptionTitleActive]}>
+                        {gsm.label}
+                      </Text>
+                      <Text style={styles.specOptionDesc}>{gsm.note}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Print Type */}
+                <Text style={styles.fieldSectionLabel}>Color Mode</Text>
+                <View style={styles.optionsRow}>
+                  {[
+                    { id: 'Black & White', title: 'Black & White', desc: 'Deep monochrome laser printing' },
+                    { id: 'Mixed (B&W + Colour)', title: 'Mixed (B&W + Color)', desc: 'Full-color charts + monochrome text' },
+                    { id: 'Full Colour', title: 'Full Color All Pages', desc: 'Vivid color across all sheets' },
+                  ].map((pt) => (
+                    <TouchableOpacity
+                      key={pt.id}
+                      style={[styles.specOptionPill, customization.printType === pt.id && styles.specOptionPillActive]}
+                      onPress={() => updateCustomization({ printType: pt.id as any })}
+                    >
+                      <Text style={[styles.specOptionTitle, customization.printType === pt.id && styles.specOptionTitleActive]}>
+                        {pt.title}
+                      </Text>
+                      <Text style={styles.specOptionDesc}>{pt.desc}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Print Sides */}
+                <Text style={styles.fieldSectionLabel}>Printing Sides</Text>
+                <View style={styles.optionsRow}>
+                  {[
+                    { id: 'Double-Sided (Recommended)', title: 'Double-Sided (Front & Back)', desc: 'Standard university requirement' },
+                    { id: 'Single-Sided', title: 'Single-Sided (One Page per Sheet)', desc: 'Traditional single-side folio' },
+                  ].map((sd) => (
+                    <TouchableOpacity
+                      key={sd.id}
+                      style={[styles.specOptionPill, customization.printSides === sd.id && styles.specOptionPillActive]}
+                      onPress={() => updateCustomization({ printSides: sd.id as any })}
+                    >
+                      <Text style={[styles.specOptionTitle, customization.printSides === sd.id && styles.specOptionTitleActive]}>
+                        {sd.title}
+                      </Text>
+                      <Text style={styles.specOptionDesc}>{sd.desc}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
+            )}
 
-              {/* Cover Input Fields */}
-              <View style={styles.formFields}>
-                <View style={styles.fieldItem}>
-                  <Text style={styles.fieldLabel}>Project Title *</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={customization.cover.projectTitle}
-                    onChangeText={(val) => handleCoverChange('projectTitle', val)}
-                    placeholder="e.g. AI-Powered Autonomous Drone Navigation"
-                  />
+            {/* STEP 4: CONFIGURE BINDING & COVER */}
+            {currentStep === 4 && (
+              <View style={styles.stepCard}>
+                <View style={styles.stepHeader}>
+                  <Text style={styles.stepHeading}>Step 4: Configure Binding & Cover Foil</Text>
+                  <Text style={styles.stepSubtext}>
+                    Select your cover color, foil lettering, and fill in your university cover details.
+                  </Text>
                 </View>
 
-                <View style={styles.fieldItem}>
-                  <Text style={styles.fieldLabel}>Student Full Name(s) *</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={customization.cover.studentName}
-                    onChangeText={(val) => handleCoverChange('studentName', val)}
-                    placeholder="e.g. Aarav Sharma, Priya Patel"
-                  />
+                {/* Binding Style */}
+                <Text style={styles.fieldSectionLabel}>Binding Style</Text>
+                <View style={styles.optionsGrid}>
+                  {[
+                    { id: 'Golden Embossed Hardcover (Standard)', label: 'Golden Hardcover (Standard)' },
+                    { id: 'Silver Foil Embossed Hardcover', label: 'Silver Foil Hardcover (+₹30)' },
+                    { id: 'Premium Leatherette Rexine', label: 'Leatherette Deluxe Hardbound (+₹110)' },
+                    { id: 'Wire-O Spiral Binding', label: 'Wire-O Metal Spiral' },
+                  ].map((b) => (
+                    <TouchableOpacity
+                      key={b.id}
+                      style={[styles.specOptionPill, customization.binding === b.id && styles.specOptionPillActive]}
+                      onPress={() => updateCustomization({ binding: b.id as any })}
+                    >
+                      <Text style={[styles.specOptionTitle, customization.binding === b.id && styles.specOptionTitleActive]}>
+                        {b.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
 
-                <View style={styles.fieldItem}>
-                  <Text style={styles.fieldLabel}>College / Institute Name *</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={customization.cover.collegeName}
-                    onChangeText={(val) => handleCoverChange('collegeName', val)}
-                    placeholder="e.g. Veermata Jijabai Technological Institute (VJTI)"
-                  />
+                {/* Cover Color & Foil Swatches */}
+                <View style={styles.swatchesRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldSectionLabel}>Cover Color</Text>
+                    <View style={styles.swatchGroup}>
+                      {[
+                        { name: 'Classic Midnight Black', color: '#111827' },
+                        { name: 'Royal Navy Blue', color: '#0C1B33' },
+                        { name: 'Deep Maroon', color: '#581845' },
+                        { name: 'Dark Emerald', color: '#064E3B' },
+                      ].map((col) => (
+                        <TouchableOpacity
+                          key={col.name}
+                          style={[
+                            styles.colorCircle,
+                            { backgroundColor: col.color },
+                            customization.cover.coverColor === col.name && styles.colorCircleActive,
+                          ]}
+                          onPress={() => handleCoverTextChange('coverColor', col.name as any)}
+                        />
+                      ))}
+                    </View>
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldSectionLabel}>Embossing Foil</Text>
+                    <View style={styles.swatchGroup}>
+                      {[
+                        { name: 'Gold Foil', color: '#D4AF37' },
+                        { name: 'Silver Foil', color: '#E2E8F0' },
+                        { name: 'Rose Gold', color: '#B76E79' },
+                      ].map((foil) => (
+                        <TouchableOpacity
+                          key={foil.name}
+                          style={[
+                            styles.foilBadge,
+                            customization.cover.embossingFoil === foil.name && styles.foilBadgeActive,
+                          ]}
+                          onPress={() => handleCoverTextChange('embossingFoil', foil.name as any)}
+                        >
+                          <View style={[styles.foilMiniDot, { backgroundColor: foil.color }]} />
+                          <Text style={styles.foilBadgeText}>{foil.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
                 </View>
 
-                <View style={styles.twoColumnRow}>
-                  <View style={[styles.fieldItem, { flex: 1 }]}>
-                    <Text style={styles.fieldLabel}>Degree & Branch</Text>
+                {/* Cover Text Inputs */}
+                <Text style={styles.fieldSectionLabel}>Cover Stamping Details</Text>
+                <View style={styles.formGrid}>
+                  <View style={styles.inputWrap}>
+                    <Text style={styles.inputLabel}>University / College Name</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={customization.cover.collegeName}
+                      onChangeText={(val) => handleCoverTextChange('collegeName', val)}
+                      placeholder="e.g. University of Mumbai / VJTI"
+                    />
+                  </View>
+
+                  <View style={styles.inputWrap}>
+                    <Text style={styles.inputLabel}>Project / Thesis Title</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={customization.cover.projectTitle}
+                      onChangeText={(val) => handleCoverTextChange('projectTitle', val)}
+                      placeholder="Title of your academic project"
+                    />
+                  </View>
+
+                  <View style={styles.inputWrapHalf}>
+                    <Text style={styles.inputLabel}>Student Name</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={customization.cover.studentName}
+                      onChangeText={(val) => handleCoverTextChange('studentName', val)}
+                      placeholder="Full Name"
+                    />
+                  </View>
+
+                  <View style={styles.inputWrapHalf}>
+                    <Text style={styles.inputLabel}>Roll Number / Seat No.</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={customization.cover.rollNumber}
+                      onChangeText={(val) => handleCoverTextChange('rollNumber', val)}
+                      placeholder="e.g. 221080045"
+                    />
+                  </View>
+
+                  <View style={styles.inputWrapHalf}>
+                    <Text style={styles.inputLabel}>Degree & Branch</Text>
                     <TextInput
                       style={styles.textInput}
                       value={customization.cover.degreeBranch}
-                      onChangeText={(val) => handleCoverChange('degreeBranch', val)}
-                      placeholder="e.g. B.Tech Computer Engg"
+                      onChangeText={(val) => handleCoverTextChange('degreeBranch', val)}
+                      placeholder="e.g. B.Tech Computer Engineering"
                     />
                   </View>
 
-                  <View style={[styles.fieldItem, { flex: 1 }]}>
-                    <Text style={styles.fieldLabel}>Academic Year</Text>
+                  <View style={styles.inputWrapHalf}>
+                    <Text style={styles.inputLabel}>Academic Year</Text>
                     <TextInput
                       style={styles.textInput}
                       value={customization.cover.academicYear}
-                      onChangeText={(val) => handleCoverChange('academicYear', val)}
-                      placeholder="e.g. 2025-2026"
+                      onChangeText={(val) => handleCoverTextChange('academicYear', val)}
+                      placeholder="2025-2026"
+                    />
+                  </View>
+
+                  <View style={styles.inputWrap}>
+                    <Text style={styles.inputLabel}>Spine Embossing Text</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={customization.cover.spineText}
+                      onChangeText={(val) => handleCoverTextChange('spineText', val)}
+                      placeholder="e.g. B.TECH THESIS - AARAV SHARMA - 2026"
                     />
                   </View>
                 </View>
 
-                <View style={styles.fieldItem}>
-                  <Text style={styles.fieldLabel}>Project Guide / Mentor Name</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={customization.cover.guideName}
-                    onChangeText={(val) => handleCoverChange('guideName', val)}
-                    placeholder="e.g. Dr. Ramesh Kulkarni, Professor"
-                  />
-                </View>
-
-                <View style={styles.fieldItem}>
-                  <Text style={styles.fieldLabel}>Spine Embossing Text</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={customization.cover.spineText}
-                    onChangeText={(val) => handleCoverChange('spineText', val)}
-                    placeholder="e.g. B.TECH THESIS - AARAV SHARMA - 2026"
-                  />
-                  <Text style={styles.fieldHelper}>
-                    Spine is embossed in matching gold foil for books over 60 pages.
-                  </Text>
-                </View>
-              </View>
-            </View>
-          )}
-
-          {/* TAB 3: ADD-ONS */}
-          {activeTab === 'addons' && (
-            <View style={styles.cardSection}>
-              <View style={styles.cardSectionHeader}>
-                <View style={styles.iconCircle}>
-                  <Sparkles size={20} color={COLORS.navy} />
-                </View>
-                <View>
-                  <Text style={styles.sectionTitle}>Section J — Optional Add-Ons</Text>
-                  <Text style={styles.sectionSubtitle}>
-                    Enhance presentation quality and protect your submission document.
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.optionsList}>
-                {[
-                  {
-                    key: 'butterPaperInserts',
-                    name: 'Butter Paper Interleaving',
-                    price: '+₹30',
-                    desc: 'Translucent acid-free sheets inserted before Certificate and Approval pages.',
-                  },
-                  {
-                    key: 'goldCornerProtectors',
-                    name: 'Gold Brass Corner Protectors',
-                    price: '+₹40',
-                    desc: 'Four reinforced metallic brass corner tabs protecting hard edges from dings.',
-                  },
-                  {
-                    key: 'ribbonBookmark',
-                    name: 'Silk Ribbon Bookmark',
-                    price: '+₹20',
-                    desc: 'Woven golden silk ribbon bound into spine for easy chapter referencing during viva.',
-                  },
-                  {
-                    key: 'cdPocketSleeve',
-                    name: 'Rear CD/DVD Pocket Sleeve',
-                    price: '+₹25',
-                    desc: 'Crystal-clear adhesive plastic sleeve on rear inner cover for code repository disc.',
-                  },
-                  {
-                    key: 'certificateLamination',
-                    name: 'Color Certificate Thermal Lamination',
-                    price: '+₹35',
-                    desc: 'Thermal matte gloss protective film on College Guide Signoff & Plagiarism reports.',
-                  },
-                  {
-                    key: 'hardcoverWaterproofing',
-                    name: 'Weatherproof Nano-Seal Coating',
-                    price: '+₹45',
-                    desc: 'Invisible hydrophobic barrier protecting rexine from humidity and transport rain.',
-                  },
-                ].map((addon) => {
-                  const isChecked = !!customization.addOns[addon.key as keyof typeof customization.addOns];
-                  return (
-                    <TouchableOpacity
-                      key={addon.key}
-                      style={[styles.addonRow, isChecked && styles.addonRowChecked]}
-                      onPress={() => handleAddOnToggle(addon.key as any)}
-                    >
-                      <View style={[styles.checkboxBox, isChecked && styles.checkboxBoxChecked]}>
-                        {isChecked && <Check size={14} color={COLORS.white} />}
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <View style={styles.optionTitleRow}>
-                          <Text style={[styles.addonName, isChecked && styles.addonNameChecked]}>
-                            {addon.name}
-                          </Text>
-                          <Text style={styles.addonPrice}>{addon.price}</Text>
+                {/* Add-ons Checklist */}
+                <Text style={styles.fieldSectionLabel}>Optional Add-Ons</Text>
+                <View style={styles.addOnsGrid}>
+                  {[
+                    { key: 'butterPaperInserts', title: 'Butter Paper Tissue Separators', price: '+₹30', desc: 'Acid-free translucent sheets for certificates' },
+                    { key: 'goldCornerProtectors', title: 'Brass Corner Protectors', price: '+₹40', desc: 'Protective metal corner tabs' },
+                    { key: 'ribbonBookmark', title: 'Silk Ribbon Bookmark', price: '+₹20', desc: 'Convenient reading ribbon marker' },
+                    { key: 'cdPocketSleeve', title: 'Peel-and-Stick CD Sleeve', price: '+₹25', desc: 'Adhesive clear pocket on back inside cover' },
+                    { key: 'certificateLamination', title: 'Certificate Page Lamination', price: '+₹35', desc: 'Matte thermal lamination on first 2 sheets' },
+                  ].map((ad) => {
+                    const isChecked = customization.addOns[ad.key as keyof typeof customization.addOns];
+                    return (
+                      <TouchableOpacity
+                        key={ad.key}
+                        style={[styles.addOnCard, isChecked && styles.addOnCardChecked]}
+                        onPress={() => handleAddOnToggle(ad.key as any)}
+                        activeOpacity={0.8}
+                      >
+                        <View style={[styles.checkbox, isChecked && styles.checkboxChecked]}>
+                          {isChecked && <Check size={12} color={COLORS.white} strokeWidth={3} />}
                         </View>
-                        <Text style={styles.addonDesc}>{addon.desc}</Text>
-                      </View>
+                        <View style={{ flex: 1 }}>
+                          <View style={styles.addOnTitleRow}>
+                            <Text style={styles.addOnTitle}>{ad.title}</Text>
+                            <Text style={styles.addOnPrice}>{ad.price}</Text>
+                          </View>
+                          <Text style={styles.addOnDesc}>{ad.desc}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* STEP 5: QUANTITY */}
+            {currentStep === 5 && (
+              <View style={styles.stepCard}>
+                <View style={styles.stepHeader}>
+                  <Text style={styles.stepHeading}>Step 5: Select Number of Copies</Text>
+                  <Text style={styles.stepSubtext}>
+                    Order copies for yourself, your guide, department library, and external examiner.
+                  </Text>
+                </View>
+
+                <View style={styles.quantityPickerBox}>
+                  <Text style={styles.quantityLabel}>Total Copies Needed</Text>
+                  <View style={styles.quantityStepper}>
+                    <TouchableOpacity 
+                      style={styles.stepperBtn}
+                      onPress={() => updateCustomization({ copies: Math.max(1, customization.copies - 1) })}
+                    >
+                      <Minus size={18} color={COLORS.navy} />
                     </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-          )}
+                    <Text style={styles.quantityCount}>{customization.copies}</Text>
+                    <TouchableOpacity 
+                      style={styles.stepperBtn}
+                      onPress={() => updateCustomization({ copies: customization.copies + 1 })}
+                    >
+                      <Plus size={18} color={COLORS.navy} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
 
-          {/* Dynamic Price Summary Box */}
-          <View style={styles.pricingSummaryBox}>
-            <View style={styles.pricingSummaryHeader}>
-              <Text style={styles.pricingTitle}>Dynamic Price Breakdown</Text>
-              <View style={styles.goaThaneBadge}>
-                <Text style={styles.goaThaneBadgeText}>Goa Press ➔ Thane Hub</Text>
-              </View>
-            </View>
-
-            <View style={styles.priceLine}>
-              <Text style={styles.priceLabel}>Base Black Book ({selectedProduct.basePagesIncluded} pages included)</Text>
-              <Text style={styles.priceVal}>₹{currentPrice.basePrice}</Text>
-            </View>
-
-            {currentPrice.paperGsmExtra > 0 && (
-              <View style={styles.priceLine}>
-                <Text style={styles.priceLabel}>{customization.paperGSM}</Text>
-                <Text style={styles.priceVal}>+₹{currentPrice.paperGsmExtra}</Text>
-              </View>
-            )}
-
-            {currentPrice.bindingCost > 0 && (
-              <View style={styles.priceLine}>
-                <Text style={styles.priceLabel}>{customization.binding}</Text>
-                <Text style={styles.priceVal}>+₹{currentPrice.bindingCost}</Text>
+                {/* Bulk Tier Discounts */}
+                <View style={styles.bulkDiscountsBox}>
+                  <Text style={styles.bulkDiscountsTitle}>Tiered Student Discounts</Text>
+                  <View style={styles.bulkRow}>
+                    <View style={[styles.bulkPill, customization.copies >= 2 && styles.bulkPillActive]}>
+                      <Text style={styles.bulkPillText}>2 Copies: 5% Off</Text>
+                    </View>
+                    <View style={[styles.bulkPill, customization.copies >= 3 && styles.bulkPillActive]}>
+                      <Text style={styles.bulkPillText}>3 Copies: 10% Off</Text>
+                    </View>
+                    <View style={[styles.bulkPill, customization.copies >= 5 && styles.bulkPillActive]}>
+                      <Text style={styles.bulkPillText}>5+ Copies: 15% Off</Text>
+                    </View>
+                  </View>
+                </View>
               </View>
             )}
 
-            {currentPrice.addOnsCost > 0 && (
-              <View style={styles.priceLine}>
-                <Text style={styles.priceLabel}>Selected Add-ons</Text>
-                <Text style={styles.priceVal}>+₹{currentPrice.addOnsCost}</Text>
+            {/* STEP 6: SUMMARY & REVIEW */}
+            {currentStep === 6 && (
+              <View style={styles.stepCard}>
+                <View style={styles.stepHeader}>
+                  <Text style={styles.stepHeading}>Step 6: Review Customization Summary</Text>
+                  <Text style={styles.stepSubtext}>
+                    Inspect your specifications before previewing your virtual book or placing your order.
+                  </Text>
+                </View>
+
+                <View style={styles.summaryTable}>
+                  <View style={styles.summaryTableRow}>
+                    <Text style={styles.summaryTableKey}>Product</Text>
+                    <Text style={styles.summaryTableVal}>{selectedProduct.name}</Text>
+                  </View>
+                  <View style={styles.summaryTableRow}>
+                    <Text style={styles.summaryTableKey}>Paper & GSM</Text>
+                    <Text style={styles.summaryTableVal}>{customization.paperSize} • {customization.paperGSM}</Text>
+                  </View>
+                  <View style={styles.summaryTableRow}>
+                    <Text style={styles.summaryTableKey}>Print Mode</Text>
+                    <Text style={styles.summaryTableVal}>{customization.printType} • {customization.printSides}</Text>
+                  </View>
+                  <View style={styles.summaryTableRow}>
+                    <Text style={styles.summaryTableKey}>Binding & Foil</Text>
+                    <Text style={styles.summaryTableVal}>{customization.binding} ({customization.cover.embossingFoil})</Text>
+                  </View>
+                  <View style={styles.summaryTableRow}>
+                    <Text style={styles.summaryTableKey}>Document</Text>
+                    <Text style={styles.summaryTableVal}>
+                      {uploadedDocument ? uploadedDocument.name : 'Pending upload'}
+                    </Text>
+                  </View>
+                  <View style={styles.summaryTableRow}>
+                    <Text style={styles.summaryTableKey}>Copies</Text>
+                    <Text style={styles.summaryTableVal}>{customization.copies} {customization.copies === 1 ? 'copy' : 'copies'}</Text>
+                  </View>
+                </View>
+
+                {/* Virtual Book Preview CTA Button */}
+                <TouchableOpacity 
+                  style={styles.openBookPreviewBtn}
+                  onPress={() => navigateTo('book_preview')}
+                >
+                  <Eye size={18} color={COLORS.white} />
+                  <Text style={styles.openBookPreviewBtnText}>Inspect Virtual 3D Black Book</Text>
+                </TouchableOpacity>
               </View>
             )}
 
-            <View style={styles.priceLine}>
-              <Text style={styles.priceLabel}>Single Copy Unit Rate</Text>
-              <Text style={[styles.priceVal, { fontWeight: '700' }]}>₹{currentPrice.unitPrice}</Text>
+            {/* Stepper Navigation Buttons */}
+            <View style={styles.navRow}>
+              {currentStep > 1 && (
+                <TouchableOpacity 
+                  style={styles.prevStepBtn}
+                  onPress={() => setCurrentStep(currentStep - 1)}
+                >
+                  <ChevronLeft size={16} color={COLORS.navy} />
+                  <Text style={styles.prevStepBtnText}>Back</Text>
+                </TouchableOpacity>
+              )}
+
+              {currentStep < 6 ? (
+                <TouchableOpacity 
+                  style={styles.nextStepBtn}
+                  onPress={() => setCurrentStep(currentStep + 1)}
+                >
+                  <Text style={styles.nextStepBtnText}>Next: {steps[currentStep].title}</Text>
+                  <ChevronRight size={16} color={COLORS.white} />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity 
+                  style={styles.addToCartFinalBtn}
+                  onPress={addToCart}
+                >
+                  <Text style={styles.addToCartFinalBtnText}>Add to Cart • ₹{currentPrice.total}</Text>
+                  <ArrowRight size={16} color={COLORS.white} />
+                </TouchableOpacity>
+              )}
             </View>
+          </View>
 
-            <View style={styles.divider} />
+          {/* Right / Sidebar: Live Dynamic Price Summary */}
+          <View style={styles.sidebarSticky}>
+            <View style={styles.priceSummaryCard}>
+              <Text style={styles.priceSummaryTitle}>Live Price Breakdown</Text>
+              <Text style={styles.priceSummarySub}>Updates instantly with each specification</Text>
 
-            <View style={styles.priceLine}>
-              <Text style={styles.priceLabel}>Subtotal ({currentPrice.copies} copies)</Text>
-              <Text style={styles.priceVal}>₹{currentPrice.subtotal + currentPrice.discount}</Text>
-            </View>
-
-            {currentPrice.discount > 0 && (
-              <View style={styles.priceLine}>
-                <Text style={[styles.priceLabel, { color: COLORS.success }]}>Multi-Copy Volume Discount</Text>
-                <Text style={[styles.priceVal, { color: COLORS.success }]}>-₹{currentPrice.discount}</Text>
+              <View style={styles.priceLineRow}>
+                <Text style={styles.priceLineKey}>Base Book ({selectedProduct.basePagesIncluded} pages)</Text>
+                <Text style={styles.priceLineVal}>₹{currentPrice.basePrice}</Text>
               </View>
-            )}
 
-            <View style={styles.priceLine}>
-              <Text style={styles.priceLabel}>Thane to Mumbai Doorstep Delivery</Text>
-              <Text style={[styles.priceVal, currentPrice.deliveryFee === 0 && { color: COLORS.success }]}>
-                {currentPrice.deliveryFee === 0 ? 'FREE (Orders > ₹699)' : `₹${currentPrice.deliveryFee}`}
-              </Text>
-            </View>
+              {currentPrice.paperGsmExtra > 0 && (
+                <View style={styles.priceLineRow}>
+                  <Text style={styles.priceLineKey}>Paper Upgrade ({customization.paperGSM})</Text>
+                  <Text style={styles.priceLineVal}>+₹{currentPrice.paperGsmExtra}</Text>
+                </View>
+              )}
 
-            <View style={styles.priceLine}>
-              <Text style={styles.priceLabel}>GST (12% Printing Services)</Text>
-              <Text style={styles.priceVal}>₹{currentPrice.gstTax}</Text>
-            </View>
+              {currentPrice.bindingCost > 0 && (
+                <View style={styles.priceLineRow}>
+                  <Text style={styles.priceLineKey}>Binding Style Upgrade</Text>
+                  <Text style={styles.priceLineVal}>+₹{currentPrice.bindingCost}</Text>
+                </View>
+              )}
 
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total Estimated Cost</Text>
-              <Text style={styles.totalAmount}>₹{currentPrice.total}</Text>
+              {currentPrice.addOnsCost > 0 && (
+                <View style={styles.priceLineRow}>
+                  <Text style={styles.priceLineKey}>Selected Add-ons</Text>
+                  <Text style={styles.priceLineVal}>+₹{currentPrice.addOnsCost}</Text>
+                </View>
+              )}
+
+              <View style={[styles.priceLineRow, styles.unitPriceRow]}>
+                <Text style={styles.unitPriceKey}>Price Per Copy</Text>
+                <Text style={styles.unitPriceVal}>₹{currentPrice.unitPrice}</Text>
+              </View>
+
+              <View style={styles.priceLineRow}>
+                <Text style={styles.priceLineKey}>Copies: {customization.copies}</Text>
+                <Text style={styles.priceLineVal}>₹{currentPrice.unitPrice * customization.copies}</Text>
+              </View>
+
+              {currentPrice.discount > 0 && (
+                <View style={styles.priceLineRow}>
+                  <Text style={[styles.priceLineKey, { color: COLORS.success }]}>Volume Discount</Text>
+                  <Text style={[styles.priceLineVal, { color: COLORS.success }]}>-₹{currentPrice.discount}</Text>
+                </View>
+              )}
+
+              <View style={styles.priceLineRow}>
+                <Text style={styles.priceLineKey}>Estimated Doorstep Delivery</Text>
+                <Text style={styles.priceLineVal}>
+                  {currentPrice.deliveryFee === 0 ? 'FREE' : `₹${currentPrice.deliveryFee}`}
+                </Text>
+              </View>
+
+              <View style={styles.priceLineRow}>
+                <Text style={styles.priceLineKey}>GST (12% Academic Print)</Text>
+                <Text style={styles.priceLineVal}>₹{currentPrice.gstTax}</Text>
+              </View>
+
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Total Amount</Text>
+                <Text style={styles.totalAmount}>₹{currentPrice.total}</Text>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.sidebarAddToCartBtn}
+                onPress={addToCart}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.sidebarAddToCartBtnText}>Add to Cart</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.sidebarPreviewBtn}
+                onPress={() => navigateTo('book_preview')}
+                activeOpacity={0.85}
+              >
+                <Eye size={15} color={COLORS.navy} />
+                <Text style={styles.sidebarPreviewBtnText}>Virtual Book Preview</Text>
+              </TouchableOpacity>
+
+              <View style={styles.deliveryAssurance}>
+                <Text style={styles.deliveryAssuranceText}>
+                  Estimated delivery: 3–5 business days to your doorstep.
+                </Text>
+              </View>
             </View>
           </View>
         </View>
       </ScrollView>
-
-      {/* STICKY BOTTOM ACTION BAR (Reference 4) */}
-      <StickyActionBar 
-        actionTitle="Add to Cart" 
-        onActionPress={addToCart} 
-        showQuantity={true}
-      />
     </View>
   );
 };
@@ -680,166 +813,250 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  scrollArea: {
-    flex: 1,
+  stepperContainer: {
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    paddingVertical: SPACING.sm,
   },
-  contentWrap: {
-    padding: SPACING.base,
-    maxWidth: 900,
+  stepperScroll: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.base,
+    maxWidth: 1240,
     width: '100%',
     alignSelf: 'center',
-    paddingBottom: 24,
+    gap: SPACING.md,
   },
-  headerBanner: {
-    marginBottom: SPACING.base,
-  },
-  productTag: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: COLORS.darkOrange,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  screenHeading: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: COLORS.navy,
-    letterSpacing: -0.4,
-    marginTop: 2,
-  },
-  screenSubheading: {
-    fontSize: 13,
-    color: COLORS.secondaryText,
-    marginTop: 4,
-    lineHeight: 18,
-  },
-  cardSection: {
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.base,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    marginBottom: SPACING.base,
-    shadowColor: COLORS.shadowColor,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  cardSectionHeader: {
+  stepItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
+    gap: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: RADIUS.sm,
   },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.lightBlue,
+  stepItemCurrent: {
+    backgroundColor: '#FFF7ED',
+  },
+  stepItemCompleted: {},
+  stepBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: COLORS.surfaceSubtle,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: COLORS.navy,
-  },
-  sectionSubtitle: {
-    fontSize: 12,
-    color: COLORS.secondaryText,
-    marginTop: 2,
-  },
-  groupLabel: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: COLORS.oceanBlue,
-    letterSpacing: 0.6,
-    marginBottom: SPACING.sm,
-  },
-  uploadDropzone: {
-    borderWidth: 2,
-    borderColor: COLORS.oceanBlue,
-    borderStyle: 'dashed',
-    borderRadius: RADIUS.lg,
-    backgroundColor: '#F8FBFC',
-    padding: SPACING.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  uploadingBox: {
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  uploadingText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.oceanBlue,
-  },
-  uploadIconBubble: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: COLORS.lightBlue,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.sm,
-  },
-  uploadTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: COLORS.navy,
-  },
-  uploadDesc: {
-    fontSize: 12,
-    color: COLORS.secondaryText,
-    textAlign: 'center',
-    marginTop: 4,
-    maxWidth: 320,
-    lineHeight: 16,
-  },
-  uploadBtnPlaceholder: {
-    backgroundColor: COLORS.navy,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: RADIUS.full,
-    marginTop: SPACING.md,
-  },
-  uploadBtnText: {
-    color: COLORS.white,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  uploadedDocCard: {
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  docRow: {
+  stepBadgeCurrent: {
+    backgroundColor: COLORS.darkOrange,
+    borderColor: COLORS.darkOrange,
+  },
+  stepBadgeCompleted: {
+    backgroundColor: COLORS.success,
+    borderColor: COLORS.success,
+  },
+  stepNum: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.secondaryText,
+  },
+  stepNumCurrent: {
+    color: COLORS.white,
+  },
+  stepTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.secondaryText,
+  },
+  stepTitleCurrent: {
+    color: COLORS.navy,
+    fontWeight: '700',
+  },
+  stepSubtitle: {
+    fontSize: 10,
+    color: COLORS.mutedText,
+  },
+  scrollArea: {
+    flex: 1,
+  },
+  bodyWrap: {
+    maxWidth: 1240,
+    width: '100%',
+    alignSelf: 'center',
+    padding: SPACING.base,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.lg,
+  },
+  configurationArea: {
+    flex: 1,
+    minWidth: 320,
+  },
+  stepCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  stepHeader: {
+    marginBottom: SPACING.lg,
+  },
+  stepHeading: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.navy,
+    marginBottom: 4,
+  },
+  stepSubtext: {
+    fontSize: 13,
+    color: COLORS.secondaryText,
+    lineHeight: 18,
+  },
+  productListGrid: {
+    gap: SPACING.sm,
+  },
+  productOptionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    gap: SPACING.md,
+  },
+  productOptionCardSelected: {
+    borderColor: COLORS.navy,
+    backgroundColor: '#F8FAFC',
+  },
+  prodThumb: {
+    width: 64,
+    height: 64,
+    borderRadius: RADIUS.sm,
+  },
+  prodInfo: {
+    flex: 1,
+  },
+  prodRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  prodName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.navy,
+  },
+  selectedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: COLORS.navy,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+  },
+  selectedPillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+  prodTagline: {
+    fontSize: 12,
+    color: COLORS.secondaryText,
+    marginTop: 2,
+  },
+  prodPrice: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.darkOrange,
+    marginTop: 4,
+  },
+  dropZone: {
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: COLORS.borderDark,
+    borderRadius: RADIUS.md,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.surfaceSubtle,
+  },
+  dropZoneTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.navy,
+    marginTop: SPACING.sm,
+  },
+  dropZoneSub: {
+    fontSize: 12,
+    color: COLORS.secondaryText,
+    marginTop: 2,
+    marginBottom: SPACING.md,
+  },
+  browseFilesBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COLORS.darkOrange,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: 10,
+    borderRadius: RADIUS.sm,
+  },
+  browseFilesBtnText: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  uploadingState: {
+    alignItems: 'center',
+    padding: SPACING.lg,
+  },
+  uploadingText: {
+    marginTop: SPACING.md,
+    fontSize: 13,
+    color: COLORS.navy,
+    fontWeight: '600',
+  },
+  errorBanner: {
+    color: COLORS.error,
+    fontSize: 12,
+    marginTop: SPACING.sm,
+  },
+  uploadedFileCard: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    padding: SPACING.base,
+    backgroundColor: '#F8FAFC',
+  },
+  uploadedFileRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
   },
-  pdfIconWrap: {
+  pdfIconBox: {
     width: 48,
     height: 48,
-    borderRadius: RADIUS.md,
-    backgroundColor: '#FEF3C7',
+    borderRadius: RADIUS.sm,
+    backgroundColor: '#FFF7ED',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  docInfo: {
+  uploadedFileMeta: {
     flex: 1,
   },
-  docName: {
+  uploadedFileName: {
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.navy,
   },
-  docMeta: {
-    fontSize: 11,
+  uploadedFileSize: {
+    fontSize: 12,
     color: COLORS.secondaryText,
     marginTop: 2,
   },
@@ -851,445 +1068,454 @@ const styles = StyleSheet.create({
   },
   verifiedText: {
     fontSize: 11,
-    fontWeight: '700',
     color: COLORS.success,
+    fontWeight: '600',
   },
-  docActionsRow: {
+  uploadActionsRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: SPACING.sm,
     marginTop: SPACING.md,
     paddingTop: SPACING.sm,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
   },
-  docActionBtn: {
+  actionBtnSecondary: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.xs,
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  docActionBtnText: {
+  actionBtnSecondaryText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.oceanBlue,
+    fontWeight: '600',
+    color: COLORS.navy,
   },
-  removeBtn: {
+  actionBtnDelete: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: RADIUS.xs,
     marginLeft: 'auto',
   },
-  tabsBar: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.lg,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: SPACING.base,
-  },
-  subTab: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: RADIUS.md,
-  },
-  subTabActive: {
-    backgroundColor: COLORS.navy,
-  },
-  subTabText: {
+  actionBtnDeleteText: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.secondaryText,
+    color: COLORS.error,
   },
-  subTabTextActive: {
-    color: COLORS.white,
-    fontWeight: '800',
-  },
-  specificationsStack: {
-    gap: SPACING.base,
-  },
-  singleChoiceRow: {
-    marginTop: 2,
-  },
-  choiceCard: {
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
-  },
-  choiceCardSelected: {
-    backgroundColor: COLORS.lightBlue,
-    borderColor: COLORS.oceanBlue,
-  },
-  choiceHeader: {
+  preflightNoticeBox: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
-  },
-  choiceTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: COLORS.navy,
-  },
-  choiceDesc: {
-    fontSize: 12,
-    color: COLORS.secondaryText,
-    lineHeight: 16,
-  },
-  optionsList: {
     gap: SPACING.sm,
-  },
-  optionRowCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: '#F0F9FF',
     padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
-    gap: SPACING.md,
+    borderRadius: RADIUS.sm,
+    marginTop: SPACING.md,
   },
-  optionRowCardSelected: {
-    backgroundColor: COLORS.lightBlue,
-    borderColor: COLORS.navy,
+  preflightNoticeText: {
+    flex: 1,
+    fontSize: 12,
+    color: COLORS.oceanBlue,
+    lineHeight: 17,
   },
-  radioCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: COLORS.secondaryText,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioCircleSelected: {
-    borderColor: COLORS.navy,
-  },
-  radioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: COLORS.navy,
-  },
-  optionTitleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  optionName: {
+  fieldSectionLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: COLORS.primaryText,
-  },
-  optionNameSelected: {
     color: COLORS.navy,
-    fontWeight: '800',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xs,
   },
-  optionExtraPrice: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: COLORS.darkOrange,
-  },
-  optionDesc: {
-    fontSize: 11,
-    color: COLORS.secondaryText,
-    marginTop: 2,
+  optionsRow: {
+    gap: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   optionsGrid: {
-    gap: SPACING.sm,
+    gap: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
-  gridOptionCard: {
+  specOptionPill: {
     padding: SPACING.md,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
     borderWidth: 1.5,
     borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.surface,
   },
-  gridOptionCardSelected: {
-    backgroundColor: COLORS.lightBlue,
+  specOptionPillActive: {
     borderColor: COLORS.navy,
+    backgroundColor: '#F8FAFC',
   },
-  gridOptionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  gridOptionTitle: {
+  specOptionTitle: {
     fontSize: 13,
     fontWeight: '700',
     color: COLORS.primaryText,
   },
-  gridOptionTitleSelected: {
+  specOptionTitleActive: {
     color: COLORS.navy,
-    fontWeight: '800',
   },
-  gridOptionDesc: {
+  specOptionDesc: {
     fontSize: 11,
     color: COLORS.secondaryText,
-    lineHeight: 15,
+    marginTop: 2,
   },
-  twoColumnRow: {
+  swatchesRow: {
     flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  halfCard: {
-    flex: 1,
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
-  },
-  halfCardSelected: {
-    backgroundColor: COLORS.lightBlue,
-    borderColor: COLORS.navy,
-  },
-  pillSelectorRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  pillBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
-  },
-  pillBtnSelected: {
-    backgroundColor: COLORS.navy,
-    borderColor: COLORS.navy,
-  },
-  pillBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.primaryText,
-  },
-  pillBtnTextSelected: {
-    color: COLORS.white,
-    fontWeight: '700',
-  },
-  customRangeInputWrap: {
-    marginTop: SPACING.sm,
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.navy,
-    marginBottom: 4,
-  },
-  textInput: {
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 13,
-    color: COLORS.navy,
-  },
-  bindingCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
     gap: SPACING.md,
+    marginVertical: SPACING.sm,
   },
-  bindingCardSelected: {
-    backgroundColor: COLORS.lightBlue,
-    borderColor: COLORS.navy,
-  },
-  bindingTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.primaryText,
-  },
-  bindingTitleSelected: {
-    color: COLORS.navy,
-    fontWeight: '800',
-  },
-  bindingBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(16, 35, 63, 0.08)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: RADIUS.sm,
-    marginTop: 4,
-  },
-  bindingBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: COLORS.navy,
-  },
-  coverColorBlock: {
-    marginBottom: SPACING.base,
-  },
-  swatchSelectorRow: {
+  swatchGroup: {
     flexDirection: 'row',
-    gap: SPACING.sm,
     flexWrap: 'wrap',
+    gap: 8,
     marginTop: 4,
   },
-  colorChip: {
+  colorCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  colorCircleActive: {
+    borderColor: COLORS.darkOrange,
+    transform: [{ scale: 1.1 }],
+  },
+  foilBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: RADIUS.md,
+    paddingVertical: 6,
+    borderRadius: RADIUS.xs,
     borderWidth: 1,
     borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.surface,
   },
-  colorChipSelected: {
+  foilBadgeActive: {
     borderColor: COLORS.navy,
-    backgroundColor: COLORS.lightBlue,
+    backgroundColor: '#F1F5F9',
   },
-  colorSquare: {
-    width: 14,
-    height: 14,
-    borderRadius: 3,
+  foilMiniDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
-  colorChipText: {
+  foilBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: COLORS.primaryText,
-  },
-  colorChipTextSelected: {
-    color: COLORS.navy,
-    fontWeight: '700',
-  },
-  formFields: {
-    gap: SPACING.md,
-  },
-  fieldItem: {
-    gap: 4,
-  },
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: '700',
     color: COLORS.navy,
   },
-  fieldHelper: {
-    fontSize: 10,
+  formGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  },
+  inputWrap: {
+    width: '100%',
+  },
+  inputWrapHalf: {
+    flex: 1,
+    minWidth: 150,
+  },
+  inputLabel: {
+    fontSize: 11,
+    fontWeight: '600',
     color: COLORS.secondaryText,
-    marginTop: 2,
+    marginBottom: 4,
   },
-  addonRow: {
+  textInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.xs,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 8,
+    fontSize: 13,
+    color: COLORS.primaryText,
+    backgroundColor: COLORS.surface,
+  },
+  addOnsGrid: {
+    gap: SPACING.xs,
+    marginTop: 4,
+  },
+  addOnCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
     gap: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
   },
-  addonRowChecked: {
-    backgroundColor: COLORS.lightBlue,
-    borderColor: COLORS.oceanBlue,
+  addOnCardChecked: {
+    borderColor: COLORS.darkOrange,
+    backgroundColor: '#FFF7ED',
   },
-  checkboxBox: {
+  checkbox: {
     width: 20,
     height: 20,
-    borderRadius: RADIUS.sm,
-    borderWidth: 2,
-    borderColor: COLORS.secondaryText,
+    borderRadius: RADIUS.xs,
+    borderWidth: 1.5,
+    borderColor: COLORS.borderDark,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.white,
   },
-  checkboxBoxChecked: {
-    backgroundColor: COLORS.oceanBlue,
-    borderColor: COLORS.oceanBlue,
+  checkboxChecked: {
+    backgroundColor: COLORS.darkOrange,
+    borderColor: COLORS.darkOrange,
   },
-  addonName: {
+  addOnTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  addOnTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: COLORS.primaryText,
-  },
-  addonNameChecked: {
     color: COLORS.navy,
-    fontWeight: '800',
   },
-  addonPrice: {
+  addOnPrice: {
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.darkOrange,
   },
-  addonDesc: {
+  addOnDesc: {
     fontSize: 11,
     color: COLORS.secondaryText,
     marginTop: 2,
-    lineHeight: 15,
   },
-  pricingSummaryBox: {
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.base,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    marginTop: SPACING.sm,
-  },
-  pricingSummaryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  quantityPickerBox: {
+    padding: SPACING.lg,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surfaceSubtle,
     alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  quantityLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.navy,
     marginBottom: SPACING.md,
   },
-  pricingTitle: {
-    fontSize: 15,
+  quantityStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.lg,
+  },
+  stepperBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quantityCount: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: COLORS.navy,
+    minWidth: 40,
+    textAlign: 'center',
+  },
+  bulkDiscountsBox: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: SPACING.md,
+  },
+  bulkDiscountsTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.navy,
+    marginBottom: SPACING.sm,
+  },
+  bulkRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  bulkPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: RADIUS.xs,
+    backgroundColor: COLORS.surfaceSubtle,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  bulkPillActive: {
+    backgroundColor: '#F0FDF4',
+    borderColor: COLORS.success,
+  },
+  bulkPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.secondaryText,
+  },
+  summaryTable: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.sm,
+    overflow: 'hidden',
+    marginBottom: SPACING.lg,
+  },
+  summaryTableRow: {
+    flexDirection: 'row',
+    padding: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
+  },
+  summaryTableKey: {
+    width: 140,
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.secondaryText,
+  },
+  summaryTableVal: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.navy,
+  },
+  openBookPreviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: COLORS.navy,
+    paddingVertical: 12,
+    borderRadius: RADIUS.sm,
+  },
+  openBookPreviewBtnText: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+  },
+  prevStepBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: 10,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  prevStepBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.navy,
+  },
+  nextStepBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COLORS.navy,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: 10,
+    borderRadius: RADIUS.sm,
+    marginLeft: 'auto',
+  },
+  nextStepBtnText: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  addToCartFinalBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: COLORS.darkOrange,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: 12,
+    borderRadius: RADIUS.sm,
+    marginLeft: 'auto',
+  },
+  addToCartFinalBtnText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  // Sidebar Sticky Styles
+  sidebarSticky: {
+    width: 320,
+  },
+  priceSummaryCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  priceSummaryTitle: {
+    fontSize: 16,
     fontWeight: '800',
     color: COLORS.navy,
   },
-  goaThaneBadge: {
-    backgroundColor: COLORS.lightBlue,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.sm,
+  priceSummarySub: {
+    fontSize: 11,
+    color: COLORS.secondaryText,
+    marginTop: 2,
+    marginBottom: SPACING.md,
   },
-  goaThaneBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: COLORS.oceanBlue,
-  },
-  priceLine: {
+  priceLineRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    justifyContent: 'space-between',
+    marginVertical: 4,
   },
-  priceLabel: {
+  priceLineKey: {
     fontSize: 12,
     color: COLORS.secondaryText,
   },
-  priceVal: {
+  priceLineVal: {
     fontSize: 12,
-    color: COLORS.navy,
     fontWeight: '600',
+    color: COLORS.primaryText,
   },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.borderLight,
-    marginVertical: SPACING.sm,
+  unitPriceRow: {
+    paddingVertical: 6,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: COLORS.borderLight,
+    marginVertical: 6,
+  },
+  unitPriceKey: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.navy,
+  },
+  unitPriceVal: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.navy,
   },
   totalRow: {
     flexDirection: 'row',
+    alignItems: 'baseline',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: SPACING.sm,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    marginTop: 4,
+    paddingTop: SPACING.md,
+    marginTop: SPACING.sm,
+    borderTopWidth: 1.5,
+    borderTopColor: COLORS.navy,
   },
   totalLabel: {
     fontSize: 14,
@@ -1297,8 +1523,50 @@ const styles = StyleSheet.create({
     color: COLORS.navy,
   },
   totalAmount: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '900',
+    color: COLORS.darkOrange,
+  },
+  sidebarAddToCartBtn: {
+    backgroundColor: COLORS.darkOrange,
+    paddingVertical: 12,
+    borderRadius: RADIUS.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SPACING.lg,
+  },
+  sidebarAddToCartBtnText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  sidebarPreviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingVertical: 10,
+    borderRadius: RADIUS.sm,
+    marginTop: SPACING.xs,
+  },
+  sidebarPreviewBtnText: {
     color: COLORS.navy,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  deliveryAssurance: {
+    marginTop: SPACING.md,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+  },
+  deliveryAssuranceText: {
+    fontSize: 11,
+    color: COLORS.secondaryText,
+    textAlign: 'center',
+    lineHeight: 16,
   },
 });

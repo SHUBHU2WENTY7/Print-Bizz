@@ -7,7 +7,8 @@ import {
   FilterState, 
   Order, 
   UploadedDocument, 
-  PriceBreakdown 
+  PriceBreakdown,
+  AppNotification
 } from '../types';
 import { BLACK_BOOK_PRODUCTS, INITIAL_CUSTOMIZATION } from '../constants/products';
 import { calculatePrice } from '../services/pricingService';
@@ -15,17 +16,24 @@ import { api, MOCK_EXISTING_ORDERS, MOCK_SAVED_ADDRESSES, INITIAL_TRACKING_STAGE
 
 export type ScreenName = 
   | 'home'
+  | 'explore'
   | 'product_details'
   | 'customize'
+  | 'document_upload'
+  | 'book_preview'
   | 'document_preview'
   | 'cart'
   | 'checkout'
   | 'order_confirmation'
   | 'my_orders'
-  | 'order_tracking'
+  | 'order_details'
+  | 'wishlist'
+  | 'notifications'
   | 'profile'
-  | 'search'
-  | 'support';
+  | 'saved_addresses'
+  | 'my_documents'
+  | 'support'
+  | 'search';
 
 interface AppStore {
   // Navigation
@@ -47,6 +55,11 @@ interface AppStore {
   isUploading: boolean;
   setIsUploading: (val: boolean) => void;
 
+  // User Documents Library
+  userDocuments: UploadedDocument[];
+  addUserDocument: (doc: UploadedDocument) => void;
+  removeUserDocument: (docId: string) => void;
+
   // Dynamic Pricing for current customization
   currentPrice: PriceBreakdown;
   recalculatePrice: () => void;
@@ -58,20 +71,26 @@ interface AppStore {
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
   cartTotalCount: () => number;
+  editCartItem: (itemId: string) => void;
 
   // Addresses
   addresses: CustomerAddress[];
   selectedAddressId: string;
   setSelectedAddressId: (id: string) => void;
   addAddress: (addr: Omit<CustomerAddress, 'id'>) => void;
+  updateAddress: (id: string, addr: Partial<CustomerAddress>) => void;
+  deleteAddress: (id: string) => void;
+  setDefaultAddress: (id: string) => void;
 
   // Orders & Tracking
   orders: Order[];
   activeOrder: Order | null;
+  selectedOrder: Order | null;
   setActiveOrder: (order: Order | null) => void;
+  selectOrder: (orderId: string) => void;
   placeOrder: (paymentMethod: Order['paymentMethod'], deliveryInstructions?: string) => Promise<Order>;
 
-  // Filter Modal
+  // Filter Modal & Explore Filters
   isFilterModalVisible: boolean;
   openFilterModal: () => void;
   closeFilterModal: () => void;
@@ -85,6 +104,12 @@ interface AppStore {
   recentSearches: string[];
   addRecentSearch: (query: string) => void;
 
+  // Notifications
+  notifications: AppNotification[];
+  markNotificationAsRead: (id: string) => void;
+  markAllNotificationsAsRead: () => void;
+  deleteNotification: (id: string) => void;
+
   // Profile
   userProfile: {
     name: string;
@@ -97,6 +122,9 @@ interface AppStore {
   // Wishlist
   wishlist: string[];
   toggleWishlist: (productId: string) => void;
+  addToWishlist: (productId: string) => void;
+  removeFromWishlist: (productId: string) => void;
+  isWishlisted: (productId: string) => boolean;
 }
 
 const defaultCustomization: CustomizationState = {
@@ -115,12 +143,42 @@ const defaultCustomization: CustomizationState = {
 
 const defaultFilters: FilterState = {
   category: 'All',
-  minPrice: 200,
+  minPrice: 99,
   maxPrice: 800,
   paperGSM: 'All GSM',
   bindingType: 'All Bindings',
   sortBy: 'popular',
 };
+
+const INITIAL_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: 'notif-1',
+    title: 'Order Dispatched',
+    message: 'Your thesis order PB-2026-90412 is on track for delivery.',
+    date: '2 hours ago',
+    read: false,
+    type: 'order',
+    linkScreen: 'my_orders',
+  },
+  {
+    id: 'notif-2',
+    title: 'Final Year Project Discount',
+    message: 'Get 15% off when ordering 3 or more copies for your committee members.',
+    date: '1 day ago',
+    read: false,
+    type: 'offer',
+    linkScreen: 'explore',
+  },
+  {
+    id: 'notif-3',
+    title: 'Preflight Guidelines Updated',
+    message: 'Check out the new margin clearing helper for Mumbai University & SPPU.',
+    date: '3 days ago',
+    read: true,
+    type: 'info',
+    linkScreen: 'support',
+  },
+];
 
 export const useAppStore = create<AppStore>((set, get) => ({
   // Navigation
@@ -197,8 +255,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
         ...state.customization,
         document: doc || undefined,
       };
+      const updatedDocs = doc && !state.userDocuments.some(d => d.id === doc.id) 
+        ? [doc, ...state.userDocuments] 
+        : state.userDocuments;
       return {
         uploadedDocument: doc,
+        userDocuments: updatedDocs,
         customization: updatedCust,
         currentPrice: calculatePrice(updatedCust, doc?.pageCount),
       };
@@ -206,6 +268,20 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
   isUploading: false,
   setIsUploading: (val) => set({ isUploading: val }),
+
+  // User Documents Library
+  userDocuments: [],
+  addUserDocument: (doc) => {
+    set((state) => ({
+      userDocuments: [doc, ...state.userDocuments.filter(d => d.id !== doc.id)],
+    }));
+  },
+  removeUserDocument: (docId) => {
+    set((state) => ({
+      userDocuments: state.userDocuments.filter(d => d.id !== docId),
+      uploadedDocument: state.uploadedDocument?.id === docId ? null : state.uploadedDocument,
+    }));
+  },
 
   // Pricing
   currentPrice: calculatePrice(defaultCustomization, 80),
@@ -220,17 +296,19 @@ export const useAppStore = create<AppStore>((set, get) => ({
   cart: [],
   addToCart: () => {
     const state = get();
+    // Honest document status: if uploaded, attach real document; otherwise mark as pending upload
     const doc: UploadedDocument = state.uploadedDocument || {
-      id: 'doc_default_sample',
-      name: 'Project_Final_Thesis_v3.pdf',
-      size: 4.8 * 1024 * 1024,
+      id: 'doc_pending_' + Date.now().toString(36),
+      name: 'Document to be uploaded',
+      size: 0,
       pageCount: state.selectedProduct.basePagesIncluded,
-      colorPageCount: 12,
-      bwPageCount: state.selectedProduct.basePagesIncluded - 12,
-      uploadedAt: 'Just now',
-      status: 'ready',
-      validationMessage: 'Auto-verified: standard margin, PDF/X compliance',
-      previewPages: ['Front Page', 'Index', 'Chapter 1', 'Results'],
+      colorPageCount: 0,
+      bwPageCount: state.selectedProduct.basePagesIncluded,
+      uploadedAt: 'Pending',
+      status: 'uploading',
+      validationMessage: 'Please upload your PDF or Word document before or after checkout',
+      previewPages: ['Cover'],
+      isRealFile: false,
     };
 
     const newItem: CartItem = {
@@ -276,6 +354,20 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const state = get();
     return state.cart.reduce((sum, item) => sum + (item.customization.copies || 1), 0);
   },
+  editCartItem: (itemId) => {
+    const state = get();
+    const item = state.cart.find((c) => c.id === itemId);
+    if (item) {
+      set({
+        selectedProduct: item.product,
+        customization: { ...item.customization },
+        uploadedDocument: item.document.isRealFile ? item.document : null,
+        currentPrice: { ...item.pricing },
+        currentScreen: 'customize',
+        screenHistory: [...state.screenHistory, 'customize'],
+      });
+    }
+  },
 
   // Addresses
   addresses: MOCK_SAVED_ADDRESSES,
@@ -291,19 +383,50 @@ export const useAppStore = create<AppStore>((set, get) => ({
       selectedAddressId: newAddr.id,
     }));
   },
+  updateAddress: (id, updatedFields) => {
+    set((state) => ({
+      addresses: state.addresses.map((a) => (a.id === id ? { ...a, ...updatedFields } : a)),
+    }));
+  },
+  deleteAddress: (id) => {
+    set((state) => {
+      const filtered = state.addresses.filter((a) => a.id !== id);
+      return {
+        addresses: filtered,
+        selectedAddressId: state.selectedAddressId === id ? (filtered[0]?.id || '') : state.selectedAddressId,
+      };
+    });
+  },
+  setDefaultAddress: (id) => {
+    set((state) => ({
+      addresses: state.addresses.map((a) => ({
+        ...a,
+        isDefault: a.id === id,
+      })),
+      selectedAddressId: id,
+    }));
+  },
 
   // Orders
   orders: MOCK_EXISTING_ORDERS,
   activeOrder: MOCK_EXISTING_ORDERS[0],
+  selectedOrder: MOCK_EXISTING_ORDERS[0],
   setActiveOrder: (order) => set({ activeOrder: order }),
+  selectOrder: (orderId) => {
+    const found = get().orders.find((o) => o.id === orderId || o.orderNumber === orderId);
+    if (found) {
+      set((state) => ({
+        selectedOrder: found,
+        currentScreen: 'order_details',
+        screenHistory: [...state.screenHistory, 'order_details'],
+      }));
+    }
+  },
   placeOrder: async (paymentMethod, deliveryInstructions) => {
     const state = get();
     const address = state.addresses.find((a) => a.id === state.selectedAddressId) || state.addresses[0];
     
-    // Calculate aggregate pricing across cart
-    let aggTotal = 0;
     let aggSubtotal = 0;
-    let aggDelivery = 0;
     let aggGst = 0;
 
     state.cart.forEach((item) => {
@@ -311,12 +434,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
       aggGst += item.pricing.gstTax;
     });
 
-    aggDelivery = aggSubtotal >= 699 ? 0 : 49;
-    aggTotal = aggSubtotal + aggDelivery + aggGst;
+    const aggDelivery = aggSubtotal >= 699 ? 0 : 49;
+    const aggTotal = aggSubtotal + aggDelivery + aggGst;
 
     const orderNum = 'PB-2026-' + Math.floor(10000 + Math.random() * 90000);
     const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    const estDelivery = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' (Guaranteed)';
+    const estDelivery = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' (Estimated Delivery)';
 
     const newOrder: Order = {
       id: 'order_' + Date.now(),
@@ -328,7 +451,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       customerEmail: state.userProfile.email,
       address: {
         ...address,
-        instructions: deliveryInstructions || address.instructions,
+        instructions: deliveryInstructions || address?.instructions,
       },
       items: [...state.cart],
       pricing: {
@@ -348,7 +471,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       paymentMethod,
       paymentStatus: 'PAID',
       transactionId: `TXN-RZP-${Math.floor(10000000 + Math.random() * 90000000)}`,
-      orderStatus: 'In Production (Goa)',
+      orderStatus: 'Processing',
       barcodeToken: api.generateOrderVerificationToken(orderNum),
       stages: INITIAL_TRACKING_STAGES,
     };
@@ -356,6 +479,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set((s) => ({
       orders: [newOrder, ...s.orders],
       activeOrder: newOrder,
+      selectedOrder: newOrder,
       cart: [],
       currentScreen: 'order_confirmation',
       screenHistory: [...s.screenHistory, 'order_confirmation'],
@@ -379,11 +503,29 @@ export const useAppStore = create<AppStore>((set, get) => ({
   // Search
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
-  recentSearches: ['College Black Book', 'Gold Foil Stamping', 'Engineering Capstone', 'Double Sided A4', '100 GSM Bond'],
+  recentSearches: ['Black Book', 'PhD Thesis Binding', 'Gold Foil Embossed', 'A4 Bond Paper', 'Spiral Project Book'],
   addRecentSearch: (query) => {
     if (!query.trim()) return;
     set((state) => ({
       recentSearches: [query, ...state.recentSearches.filter((q) => q !== query)].slice(0, 8),
+    }));
+  },
+
+  // Notifications
+  notifications: INITIAL_NOTIFICATIONS,
+  markNotificationAsRead: (id) => {
+    set((state) => ({
+      notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
+    }));
+  },
+  markAllNotificationsAsRead: () => {
+    set((state) => ({
+      notifications: state.notifications.map((n) => ({ ...n, read: true })),
+    }));
+  },
+  deleteNotification: (id) => {
+    set((state) => ({
+      notifications: state.notifications.filter((n) => n.id !== id),
     }));
   },
 
@@ -409,5 +551,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
         wishlist: exists ? state.wishlist.filter((id) => id !== productId) : [...state.wishlist, productId],
       };
     });
+  },
+  addToWishlist: (productId) => {
+    set((state) => ({
+      wishlist: state.wishlist.includes(productId) ? state.wishlist : [...state.wishlist, productId],
+    }));
+  },
+  removeFromWishlist: (productId) => {
+    set((state) => ({
+      wishlist: state.wishlist.filter((id) => id !== productId),
+    }));
+  },
+  isWishlisted: (productId) => {
+    return get().wishlist.includes(productId);
   },
 }));
