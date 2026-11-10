@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
+import { BlackBookCoverThumbnail } from '../components/BlackBookCoverThumbnail';
 import { 
   Star, 
   Heart, 
@@ -65,11 +66,19 @@ export const ProductDetailsScreen: React.FC = () => {
           <View style={styles.galleryColumn}>
             {/* Main Featured Image */}
             <View style={styles.mainImageWrapper}>
-              <Image 
-                source={{ uri: selectedProduct.gallery[activeGalleryIdx] || selectedProduct.image }}
-                style={styles.mainImage}
-                resizeMode="cover"
-              />
+              {activeGalleryIdx === 0 ? (
+                <BlackBookCoverThumbnail 
+                  editionName={selectedProduct.name}
+                  badge={selectedProduct.badge}
+                  height={280}
+                />
+              ) : (
+                <Image 
+                  source={{ uri: selectedProduct.gallery[activeGalleryIdx] || selectedProduct.image }}
+                  style={styles.mainImage}
+                  resizeMode="cover"
+                />
+              )}
               {discountPercent && (
                 <View style={styles.discountBadge}>
                   <Text style={styles.discountBadgeText}>{discountPercent}% OFF</Text>

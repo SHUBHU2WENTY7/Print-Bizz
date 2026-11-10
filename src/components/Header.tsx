@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Platform, ScrollView } from 'react-native';
-import { COLORS, SPACING, RADIUS } from '../constants/theme';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Platform, Dimensions } from 'react-native';
+import { COLORS, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
 import { 
   ArrowLeft, 
   ShoppingCart, 
   Search, 
-  Bell, 
   User, 
   BookOpen, 
   Heart,
   SlidersHorizontal,
-  X
+  X,
+  Bell
 } from 'lucide-react-native';
 
 interface HeaderProps {
@@ -37,7 +37,6 @@ export const Header: React.FC<HeaderProps> = ({
     searchQuery, 
     setSearchQuery, 
     addRecentSearch,
-    setFilterState,
     openFilterModal 
   } = useAppStore();
 
@@ -47,6 +46,9 @@ export const Header: React.FC<HeaderProps> = ({
   const unreadNotifCount = notifications.filter(n => !n.read).length;
   const isHome = currentScreen === 'home';
 
+  const windowWidth = Dimensions.get('window').width;
+  const isMobile = windowWidth < 600;
+
   const handleSearchSubmit = () => {
     if (localSearch.trim()) {
       setSearchQuery(localSearch.trim());
@@ -55,34 +57,12 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const handleCategoryNav = (cat: string) => {
-    if (cat === '3D Book Preview') {
-      navigateTo('book_preview');
-      return;
-    }
-    if (cat === 'Customizer') {
-      navigateTo('customize');
-      return;
-    }
-    setFilterState({ category: 'All' });
-    navigateTo('explore');
-  };
-
-  const navCategories = [
-    'All Black Books',
-    'University Edition',
-    'Executive Deluxe',
-    'Doctoral Thesis',
-    '3D Book Preview',
-    'Customizer',
-  ];
-
   return (
     <View style={styles.headerWrapper}>
       {/* Primary Top Bar */}
       <View style={styles.mainBar}>
         <View style={styles.topContainer}>
-          {/* Left: Back button or Brand Logo */}
+          {/* Left: Back button and Brand Logo */}
           <View style={styles.leftGroup}>
             {showBack && !isHome && (
               <TouchableOpacity 
@@ -91,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
                 accessibilityLabel="Go back"
                 activeOpacity={0.7}
               >
-                <ArrowLeft size={20} color={COLORS.navy} />
+                <ArrowLeft size={18} color={COLORS.navy} />
               </TouchableOpacity>
             )}
 
@@ -101,26 +81,35 @@ export const Header: React.FC<HeaderProps> = ({
               activeOpacity={0.8}
             >
               <View style={styles.logoIconBadge}>
-                <BookOpen size={18} color={COLORS.white} strokeWidth={2.4} />
+                <BookOpen size={16} color={COLORS.white} strokeWidth={2.4} />
               </View>
               <View>
                 <View style={styles.brandTextRow}>
                   <Text style={styles.brandPrint}>PRINT</Text>
                   <Text style={styles.brandBizz}>BIZZ</Text>
                 </View>
-                <Text style={styles.brandSub}>Academic Printing & Binding</Text>
+                {!isMobile && (
+                  <Text style={styles.brandSub}>Academic Printing & Binding</Text>
+                )}
               </View>
             </TouchableOpacity>
           </View>
 
-          {/* Center: Amazon-Style Search Bar */}
-          {showSearch && (
-            <View style={styles.searchBarContainer}>
+          {/* Center Title (If Not Home and Not Searching) */}
+          {title && !isHome && (
+            <View style={styles.titleCenterWrap}>
+              <Text style={styles.screenTitleText} numberOfLines={1}>{title}</Text>
+            </View>
+          )}
+
+          {/* Desktop Search Bar (Hidden on mobile) */}
+          {showSearch && !isMobile && (
+            <View style={styles.desktopSearchWrap}>
               <View style={styles.searchFieldWrap}>
-                <Search size={16} color={COLORS.mutedText} style={styles.searchIcon} />
+                <Search size={15} color={COLORS.mutedText} style={{ marginRight: 6 }} />
                 <TextInput
                   style={styles.searchInput}
-                  placeholder="Search university black books, thesis binding, paper GSM..."
+                  placeholder="Search university editions, paper GSM..."
                   placeholderTextColor={COLORS.mutedText}
                   value={localSearch}
                   onChangeText={setLocalSearch}
@@ -130,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {localSearch ? (
                   <TouchableOpacity 
                     onPress={() => { setLocalSearch(''); setSearchQuery(''); }} 
-                    style={styles.clearSearchBtn}
+                    style={{ padding: 4 }}
                   >
                     <X size={14} color={COLORS.secondaryText} />
                   </TouchableOpacity>
@@ -154,7 +143,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onPress={openFilterModal}
                 accessibilityLabel="Filter specifications"
               >
-                <SlidersHorizontal size={18} color={COLORS.navy} />
+                <SlidersHorizontal size={17} color={COLORS.navy} />
               </TouchableOpacity>
             )}
 
@@ -166,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
               activeOpacity={0.7}
             >
               <Heart 
-                size={19} 
+                size={18} 
                 color={currentScreen === 'wishlist' ? COLORS.darkOrange : COLORS.navy}
                 fill={currentScreen === 'wishlist' ? COLORS.darkOrange : 'transparent'} 
               />
@@ -177,16 +166,18 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </TouchableOpacity>
 
-            {/* Notifications Button */}
-            <TouchableOpacity 
-              style={[styles.iconActionBtn, currentScreen === 'notifications' && styles.iconActionBtnActive]}
-              onPress={() => navigateTo('notifications')}
-              accessibilityLabel="Notifications"
-              activeOpacity={0.7}
-            >
-              <Bell size={19} color={COLORS.navy} />
-              {unreadNotifCount > 0 && <View style={styles.notificationDot} />}
-            </TouchableOpacity>
+            {/* Notifications Button (hidden on very small mobile to prevent any overflow) */}
+            {!isMobile && (
+              <TouchableOpacity 
+                style={[styles.iconActionBtn, currentScreen === 'notifications' && styles.iconActionBtnActive]}
+                onPress={() => navigateTo('notifications')}
+                accessibilityLabel="Notifications"
+                activeOpacity={0.7}
+              >
+                <Bell size={18} color={COLORS.navy} />
+                {unreadNotifCount > 0 && <View style={styles.notificationDot} />}
+              </TouchableOpacity>
+            )}
 
             {/* Cart Button */}
             <TouchableOpacity 
@@ -195,8 +186,8 @@ export const Header: React.FC<HeaderProps> = ({
               accessibilityLabel="Shopping Cart"
               activeOpacity={0.85}
             >
-              <ShoppingCart size={18} color={COLORS.white} />
-              <Text style={styles.cartBtnLabel}>Cart</Text>
+              <ShoppingCart size={17} color={COLORS.white} />
+              {!isMobile && <Text style={styles.cartBtnLabel}>Cart</Text>}
               {cartCount > 0 && (
                 <View style={styles.cartCountBadge}>
                   <Text style={styles.cartCountBadgeText}>{cartCount}</Text>
@@ -211,19 +202,19 @@ export const Header: React.FC<HeaderProps> = ({
               accessibilityLabel="User Profile & Account"
               activeOpacity={0.8}
             >
-              <User size={18} color={COLORS.navy} />
+              <User size={17} color={COLORS.navy} />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Mobile Search Input (Visible only if narrow) */}
-        {showSearch && (
+        {/* Mobile Search Input (Cleanly rendered below top bar on mobile) */}
+        {showSearch && isMobile && (
           <View style={styles.mobileSearchRow}>
             <View style={styles.mobileSearchInputWrap}>
-              <Search size={15} color={COLORS.mutedText} style={{ marginRight: 6 }} />
+              <Search size={14} color={COLORS.mutedText} style={{ marginRight: 6 }} />
               <TextInput
                 style={styles.mobileSearchInput}
-                placeholder="Search products, binding, or GSM..."
+                placeholder="Search university black books..."
                 placeholderTextColor={COLORS.mutedText}
                 value={localSearch}
                 onChangeText={setLocalSearch}
@@ -236,36 +227,16 @@ export const Header: React.FC<HeaderProps> = ({
                 </TouchableOpacity>
               ) : null}
             </View>
+            <TouchableOpacity 
+              style={styles.mobileSearchBtn}
+              onPress={handleSearchSubmit}
+            >
+              <Text style={styles.mobileSearchBtnText}>Go</Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>
-
-      {/* Sub Navigation Bar: Categories & Shortcuts */}
-      <View style={styles.subNavBar}>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.subNavContent}
-        >
-          {navCategories.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={styles.categoryPill}
-              onPress={() => handleCategoryNav(category)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.categoryPillText}>{category}</Text>
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity 
-            style={styles.categoryPill}
-            onPress={() => navigateTo('support')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.categoryPillText}>Help & FAQs</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
+      {/* Sub-navbar completely removed per user request */}
     </View>
   );
 };
@@ -274,33 +245,36 @@ const styles = StyleSheet.create({
   headerWrapper: {
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: '#FDE68A', // Soft warm harvest border
     zIndex: 100,
+    width: '100%',
   },
   mainBar: {
-    paddingHorizontal: SPACING.base,
-    paddingTop: Platform.OS === 'web' ? SPACING.md : SPACING.base,
-    paddingBottom: SPACING.md,
+    paddingHorizontal: 12,
+    paddingTop: Platform.OS === 'web' ? 10 : 12,
+    paddingBottom: 10,
+    width: '100%',
+    maxWidth: 1200,
+    alignSelf: 'center',
   },
   topContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    maxWidth: 1240,
     width: '100%',
-    alignSelf: 'center',
-    gap: SPACING.md,
+    gap: 8,
   },
   leftGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
+    gap: 8,
+    flexShrink: 0,
   },
   backBtn: {
-    width: 34,
-    height: 34,
+    width: 32,
+    height: 32,
     borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.surfaceSubtle,
+    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -309,12 +283,12 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
+    gap: 6,
   },
   logoIconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.md,
+    width: 30,
+    height: 30,
+    borderRadius: RADIUS.sm,
     backgroundColor: COLORS.navy,
     alignItems: 'center',
     justifyContent: 'center',
@@ -324,62 +298,64 @@ const styles = StyleSheet.create({
   brandTextRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 3,
+    gap: 2,
   },
   brandPrint: {
-    fontSize: 19,
+    fontSize: 16,
     fontWeight: '900',
     color: COLORS.navy,
     letterSpacing: 0.5,
   },
   brandBizz: {
-    fontSize: 19,
+    fontSize: 16,
     fontWeight: '900',
     color: COLORS.darkOrange,
     letterSpacing: 0.5,
   },
   brandSub: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '600',
     color: COLORS.secondaryText,
-    letterSpacing: 0.2,
   },
-  searchBarContainer: {
+  titleCenterWrap: {
     flex: 1,
-    maxWidth: 580,
+    paddingHorizontal: 6,
+  },
+  screenTitleText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.navy,
+    textAlign: 'center',
+  },
+  desktopSearchWrap: {
+    flex: 1,
+    maxWidth: 440,
     flexDirection: 'row',
     alignItems: 'center',
-    display: Platform.OS === 'web' ? 'flex' : 'none',
   },
   searchFieldWrap: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surfaceSubtle,
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: COLORS.border,
     borderTopLeftRadius: RADIUS.sm,
     borderBottomLeftRadius: RADIUS.sm,
-    paddingHorizontal: SPACING.sm,
-    height: 40,
-  },
-  searchIcon: {
-    marginRight: 6,
+    paddingHorizontal: 10,
+    height: 36,
   },
   searchInput: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 12,
     color: COLORS.primaryText,
     height: '100%',
     padding: 0,
   },
-  clearSearchBtn: {
-    padding: 4,
-  },
   searchSubmitBtn: {
     backgroundColor: COLORS.darkOrange,
-    height: 40,
-    paddingHorizontal: SPACING.base,
+    height: 36,
+    paddingHorizontal: 14,
     borderTopRightRadius: RADIUS.sm,
     borderBottomRightRadius: RADIUS.sm,
     alignItems: 'center',
@@ -387,19 +363,20 @@ const styles = StyleSheet.create({
   },
   searchSubmitBtnText: {
     color: COLORS.white,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   rightGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
+    gap: 6,
+    flexShrink: 0,
   },
   iconActionBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surfaceSubtle,
+    width: 34,
+    height: 34,
+    borderRadius: RADIUS.sm,
+    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -415,27 +392,27 @@ const styles = StyleSheet.create({
     top: -4,
     right: -4,
     backgroundColor: COLORS.darkOrange,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
     borderWidth: 1.5,
     borderColor: COLORS.white,
   },
   counterBadgeText: {
     color: COLORS.white,
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
   },
   notificationDot: {
     position: 'absolute',
-    top: 7,
-    right: 7,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: 6,
+    right: 6,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: COLORS.darkOrange,
     borderWidth: 1,
     borderColor: COLORS.white,
@@ -443,10 +420,11 @@ const styles = StyleSheet.create({
   cartBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    height: 38,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.md,
+    justifyContent: 'center',
+    gap: 4,
+    height: 34,
+    paddingHorizontal: 10,
+    borderRadius: RADIUS.sm,
     backgroundColor: COLORS.navy,
     position: 'relative',
   },
@@ -455,30 +433,30 @@ const styles = StyleSheet.create({
   },
   cartBtnLabel: {
     color: COLORS.white,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   cartCountBadge: {
     backgroundColor: COLORS.darkOrange,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
     borderWidth: 1.5,
     borderColor: COLORS.navy,
   },
   cartCountBadgeText: {
     color: COLORS.white,
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
   },
   profileBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surfaceSubtle,
+    width: 34,
+    height: 34,
+    borderRadius: RADIUS.sm,
+    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -489,48 +467,41 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
   },
   mobileSearchRow: {
-    marginTop: SPACING.sm,
-    display: Platform.OS === 'web' ? 'none' : 'flex',
-  },
-  mobileSearchInputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surfaceSubtle,
+    gap: 8,
+    marginTop: 8,
+    width: '100%',
+  },
+  mobileSearchInputWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.sm,
-    height: 38,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: 10,
+    height: 34,
   },
   mobileSearchInput: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 12,
     color: COLORS.primaryText,
+    padding: 0,
     height: '100%',
   },
-  subNavBar: {
-    backgroundColor: COLORS.surfaceSubtle,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingVertical: 6,
-  },
-  subNavContent: {
-    flexDirection: 'row',
+  mobileSearchBtn: {
+    backgroundColor: COLORS.darkOrange,
+    height: 34,
+    paddingHorizontal: 12,
+    borderRadius: RADIUS.sm,
     alignItems: 'center',
-    paddingHorizontal: SPACING.base,
-    maxWidth: 1240,
-    width: '100%',
-    alignSelf: 'center',
-    gap: SPACING.sm,
+    justifyContent: 'center',
   },
-  categoryPill: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 5,
-    borderRadius: RADIUS.xs,
-  },
-  categoryPillText: {
+  mobileSearchBtnText: {
+    color: COLORS.white,
     fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.primaryText,
+    fontWeight: '700',
   },
 });

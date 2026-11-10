@@ -1,11 +1,12 @@
 import type { ComponentType } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import { BottomNavigation } from './src/components/BottomNavigation';
 import { FilterModal } from './src/components/FilterModal';
 import { Header } from './src/components/Header';
 import { COLORS } from './src/constants/theme';
 
+import { AuthOnboardingScreen } from './src/screens/AuthOnboardingScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { ExploreScreen } from './src/screens/ExploreScreen';
 import { ProductDetailsScreen } from './src/screens/ProductDetailsScreen';
@@ -28,6 +29,7 @@ import { ScreenName, useAppStore } from './src/store/useAppStore';
 
 const screens: Record<ScreenName, ComponentType> = {
   home: HomeScreen,
+  auth_onboarding: AuthOnboardingScreen,
   explore: ExploreScreen,
   product_details: ProductDetailsScreen,
   customize: CustomizeScreen,
@@ -50,6 +52,7 @@ const screens: Record<ScreenName, ComponentType> = {
 
 const screenTitles: Record<ScreenName, string> = {
   home: 'Print Bizz',
+  auth_onboarding: 'Student Verification & Sign-In',
   explore: 'Explore Products',
   product_details: 'Product Details',
   customize: 'Customize Your Black Book',
@@ -75,24 +78,29 @@ const tabScreens: ScreenName[] = ['home', 'explore', 'my_orders', 'profile', 'se
 
 export default function App() {
   const currentScreen = useAppStore((state) => state.currentScreen);
-  const Screen = screens[currentScreen] || HomeScreen;
-  const isConfirmation = currentScreen === 'order_confirmation';
+  const userProfile = useAppStore((state) => state.userProfile);
+
+  // If user hasn't completed onboarding/sign-in, direct to auth_onboarding
+  const activeScreenName: ScreenName = !userProfile.isRegistered ? 'auth_onboarding' : currentScreen;
+  const Screen = screens[activeScreenName] || HomeScreen;
+  const isConfirmation = activeScreenName === 'order_confirmation';
+  const isOnboarding = activeScreenName === 'auth_onboarding';
 
   return (
     <View style={styles.app}>
       <StatusBar style="auto" />
-      {!isConfirmation && (
+      {!isConfirmation && !isOnboarding && (
         <Header
-          title={currentScreen === 'home' ? undefined : screenTitles[currentScreen]}
-          showBack={currentScreen !== 'home'}
-          showSearch={currentScreen === 'home' || currentScreen === 'explore' || currentScreen === 'search'}
-          showFilter={currentScreen === 'explore' || currentScreen === 'search'}
+          title={activeScreenName === 'home' ? undefined : screenTitles[activeScreenName]}
+          showBack={activeScreenName !== 'home'}
+          showSearch={activeScreenName === 'home' || activeScreenName === 'explore' || activeScreenName === 'search'}
+          showFilter={activeScreenName === 'explore' || activeScreenName === 'search'}
         />
       )}
       <View style={styles.content}>
         <Screen />
       </View>
-      {tabScreens.includes(currentScreen) && <BottomNavigation />}
+      {!isOnboarding && tabScreens.includes(activeScreenName) && <BottomNavigation />}
       <FilterModal />
     </View>
   );
@@ -102,7 +110,18 @@ const styles = StyleSheet.create({
   app: {
     flex: 1,
     minHeight: '100%',
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FFFDF7',
+    ...(Platform.OS === 'web' ? {
+      backgroundImage: `
+        radial-gradient(at 15% 12%, #FDE68A 0px, transparent 50%),
+        radial-gradient(at 85% 15%, #FBBF24 0px, transparent 48%),
+        radial-gradient(at 50% 45%, #FED7AA 0px, transparent 55%),
+        radial-gradient(at 80% 85%, #FECDD3 0px, transparent 50%),
+        radial-gradient(at 15% 85%, #FEF3C7 0px, transparent 45%),
+        #FFFDF7
+      `,
+      backgroundAttachment: 'fixed',
+    } as any : {}),
   },
   content: {
     flex: 1,

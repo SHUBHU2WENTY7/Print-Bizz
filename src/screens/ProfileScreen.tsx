@@ -44,6 +44,12 @@ export const ProfileScreen: React.FC = () => {
 
   const navMenuItems = [
     {
+      title: 'Student Verification & College Info',
+      sub: `${userProfile.college} • Roll: ${userProfile.rollNumber}`,
+      icon: <GraduationCap size={18} color={COLORS.darkOrange} />,
+      screen: 'auth_onboarding',
+    },
+    {
       title: 'Order History',
       sub: `${orders.length} orders placed`,
       icon: <Package size={18} color={COLORS.navy} />,
@@ -140,8 +146,14 @@ export const ProfileScreen: React.FC = () => {
               </View>
               <View style={styles.infoRow}>
                 <GraduationCap size={14} color={COLORS.secondaryText} />
-                <Text style={styles.infoText}>{userProfile.college}</Text>
+                <Text style={styles.infoText}>{userProfile.college} ({userProfile.university || 'University of Mumbai'})</Text>
               </View>
+              {userProfile.rollNumber ? (
+                <View style={styles.infoRow}>
+                  <MapPin size={14} color={COLORS.secondaryText} />
+                  <Text style={styles.infoText}>Roll No: {userProfile.rollNumber} • {userProfile.city || 'Mumbai'}, {userProfile.state || 'Maharashtra'}</Text>
+                </View>
+              ) : null}
             </View>
           )}
         </View>

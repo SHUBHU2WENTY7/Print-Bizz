@@ -13,7 +13,9 @@ import { CartItem, CustomizationState } from '../types';
 import { 
   X, 
   Check, 
-  Edit3
+  Edit3,
+  Plus,
+  Minus
 } from 'lucide-react-native';
 
 interface EditBlackBookModalProps {
@@ -41,11 +43,13 @@ const EditBlackBookForm: React.FC<EditBlackBookFormProps> = ({
   const [degreeBranch, setDegreeBranch] = useState(item.customization.cover.degreeBranch);
   const [academicYear, setAcademicYear] = useState(item.customization.cover.academicYear);
   const [guideName, setGuideName] = useState(item.customization.cover.guideName || '');
+  const [copies, setCopies] = useState(item.customization.copies || 1);
   const [embossingFoil, setEmbossingFoil] = useState(item.customization.cover.embossingFoil);
   const [paperGSM, setPaperGSM] = useState(item.customization.paperGSM);
 
   const handleSave = () => {
     onSave(item.id, {
+      copies,
       paperGSM,
       cover: {
         ...item.customization.cover,
@@ -204,6 +208,30 @@ const EditBlackBookForm: React.FC<EditBlackBookFormProps> = ({
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+
+          {/* Number of Copies */}
+          <Text style={styles.sectionHeader}>Number of Copies</Text>
+          <View style={styles.copiesCounterRow}>
+            <TouchableOpacity 
+              style={[styles.counterBtn, copies <= 1 && styles.counterBtnDisabled]}
+              onPress={() => setCopies(Math.max(1, copies - 1))}
+              disabled={copies <= 1}
+            >
+              <Minus size={16} color={copies <= 1 ? COLORS.mutedText : COLORS.navy} />
+            </TouchableOpacity>
+
+            <View style={styles.copiesDisplayBox}>
+              <Text style={styles.copiesCountText}>{copies}</Text>
+              <Text style={styles.copiesCountSub}>{copies === 1 ? 'Hardbound Copy' : 'Hardbound Copies'}</Text>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.counterBtn}
+              onPress={() => setCopies(Math.min(20, copies + 1))}
+            >
+              <Plus size={16} color={COLORS.navy} />
+            </TouchableOpacity>
           </View>
         </ScrollView>
 
@@ -388,6 +416,43 @@ const styles = StyleSheet.create({
   foilChoiceTextActive: {
     color: COLORS.navy,
     fontWeight: '700',
+  },
+  copiesCounterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#F8FAFC',
+    padding: 10,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  counterBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.xs,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  counterBtnDisabled: {
+    opacity: 0.4,
+  },
+  copiesDisplayBox: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  copiesCountText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.navy,
+  },
+  copiesCountSub: {
+    fontSize: 11,
+    color: COLORS.secondaryText,
+    fontWeight: '500',
   },
   modalFooter: {
     flexDirection: 'row',

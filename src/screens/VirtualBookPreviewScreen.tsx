@@ -18,7 +18,6 @@ import {
   ZoomOut, 
   Maximize2, 
   Minimize2, 
-  UploadCloud, 
   CheckCircle2, 
   Sparkles, 
   ArrowRight, 
@@ -34,7 +33,8 @@ export const VirtualBookPreviewScreen: React.FC = () => {
     navigateTo, 
     isUploading, 
     setIsUploading,
-    selectedProduct
+    addToCart,
+    currentPrice 
   } = useAppStore();
 
   const [zoomLevel, setZoomLevel] = useState<number>(1);
@@ -162,16 +162,16 @@ export const VirtualBookPreviewScreen: React.FC = () => {
 
         <View style={[styles.bookStage, { transform: [{ scale: zoomLevel }] }]}>
           <InteractiveBook
-            coverImage={selectedProduct.image || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80'}
             bookTitle={customization.cover.projectTitle || 'AI-POWERED DISTRIBUTED SUPPLY CHAIN OPTIMIZATION'}
             bookAuthor={customization.cover.studentName || 'Aarav Sharma'}
-            collegeName={customization.cover.collegeName || 'Veermata Jijabai Technological Institute (VJTI), Mumbai'}
+            collegeName={customization.cover.collegeName || 'Veermata Jijabai Technological Institute (VJTI)'}
+            university={customization.cover.university || 'University of Mumbai'}
             rollNumber={customization.cover.rollNumber || '221080045'}
             degreeBranch={customization.cover.degreeBranch || 'B.Tech in Computer Engineering'}
             academicYear={customization.cover.academicYear || '2025-2026'}
             guideName={customization.cover.guideName || 'Dr. Ramesh Kulkarni, Professor'}
             embossingFoil={customization.cover.embossingFoil || 'Gold Foil'}
-            coverColor={customization.cover.coverColor === 'Royal Navy Blue' ? '#0C1B33' : '#111827'}
+            coverColor={customization.cover.coverColor === 'Royal Navy Blue' ? '#0C1B33' : '#0B0E14'}
             uploadedDocument={uploadedDocument}
             customization={customization}
             width={bookWidth}
@@ -191,35 +191,29 @@ export const VirtualBookPreviewScreen: React.FC = () => {
             <Text style={styles.docActionSub}>
               {uploadedDocument 
                 ? `${uploadedDocument.name} (${(uploadedDocument.size / (1024 * 1024)).toFixed(2)} MB) • ${customization.paperGSM} • ${customization.cover.embossingFoil}`
-                : `Showing authentic university Black Book structure. Click front cover or arrows to flip pages.`}
+                : `Verified authentic university Black Book structure. Click front cover or arrows to flip pages.`}
             </Text>
           </View>
 
           <View style={styles.docActionButtons}>
             <TouchableOpacity 
               style={styles.reUploadBtn}
-              onPress={() => {
-                if (Platform.OS === 'web') {
-                  fileInputRef.current?.click();
-                } else {
-                  navigateTo('customize');
-                }
-              }}
+              onPress={() => navigateTo('customize')}
               activeOpacity={0.8}
             >
-              <UploadCloud size={14} color={COLORS.navy} />
-              <Text style={styles.reUploadBtnText}>
-                {uploadedDocument ? 'Replace File' : 'Upload Your PDF'}
-              </Text>
+              <Edit3 size={14} color={COLORS.white} />
+              <Text style={styles.reUploadBtnText}>Edit Details</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.proceedCustomBtn}
-              onPress={() => navigateTo('customize')}
+              onPress={() => {
+                addToCart();
+                navigateTo('checkout');
+              }}
               activeOpacity={0.85}
             >
-              <Edit3 size={14} color={COLORS.white} />
-              <Text style={styles.proceedCustomBtnText}>Edit Specs</Text>
+              <Text style={styles.proceedCustomBtnText}>Confirm & Proceed to Checkout (₹{currentPrice.total})</Text>
               <ArrowRight size={14} color={COLORS.white} />
             </TouchableOpacity>
           </View>

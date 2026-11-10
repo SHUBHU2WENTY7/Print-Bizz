@@ -19,6 +19,7 @@ export type BindingType =
 export interface CoverCustomization {
   studentName: string;
   collegeName: string;
+  university?: string;
   projectTitle: string;
   degreeBranch: string;
   academicYear: string;
@@ -28,6 +29,21 @@ export interface CoverCustomization {
   coverColor: 'Classic Midnight Black' | 'Royal Navy Blue' | 'Deep Maroon' | 'Dark Emerald';
   embossingFoil: 'Gold Foil' | 'Silver Foil' | 'Rose Gold';
   finish: 'Matte Laminated' | 'Gloss Laminated';
+}
+
+export interface UserProfile {
+  name: string;
+  email: string;
+  phone: string;
+  state: string;
+  city: string;
+  college: string;
+  collegeAddress: string;
+  university: string;
+  rollNumber: string;
+  idCardFront?: string | null;
+  idCardBack?: string | null;
+  isRegistered: boolean;
 }
 
 export interface AddOnOption {

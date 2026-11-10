@@ -31,6 +31,14 @@ export const COLORS = {
   borderLight: '#F1F5F9',   // Inner dividers
   borderDark: '#CBD5E1',
   shadowColor: '#0F172A',
+
+  // Harvest Mesh Gradient Palette (as in Harvest Image)
+  harvestBg: '#FFFDF7',
+  harvestGold: '#F59E0B',
+  harvestAmber: '#FBBF24',
+  harvestPeach: '#FDBA74',
+  harvestRose: '#FECDD3',
+  harvestCream: '#FEF3C7',
 };
 
 export const SPACING = {

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -18,10 +18,8 @@ import {
   Check, 
   UploadCloud, 
   FileText, 
-  CheckCircle2, 
   Trash2, 
   Eye, 
-  RotateCcw, 
   Plus, 
   Minus, 
   ChevronRight, 
@@ -44,7 +42,8 @@ export const CustomizeScreen: React.FC = () => {
     setIsUploading, 
     currentPrice, 
     navigateTo, 
-    addToCart 
+    addToCart,
+    userProfile 
   } = useAppStore();
 
   const [currentStep, setCurrentStep] = useState<number>(1);
@@ -52,6 +51,21 @@ export const CustomizeScreen: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Sync profile details if available
+  useEffect(() => {
+    if (userProfile.isRegistered && !customization.cover.studentName) {
+      updateCustomization((prev) => ({
+        cover: {
+          ...prev.cover,
+          studentName: userProfile.name,
+          collegeName: userProfile.college,
+          university: userProfile.university,
+          rollNumber: userProfile.rollNumber,
+        },
+      }));
+    }
+  }, [userProfile, customization.cover.studentName, updateCustomization]);
 
   // Step fulfillment validation
   const isStep1Fulfilled = Boolean(selectedProduct && selectedProduct.id);
@@ -236,62 +250,12 @@ export const CustomizeScreen: React.FC = () => {
                   </Text>
                 </View>
 
-                {uploadedDocument ? (
-                  <View style={styles.uploadedFileCard}>
-                    <View style={styles.uploadedFileRow}>
-                      <View style={styles.pdfIconBox}>
-                        <FileText size={28} color={COLORS.darkOrange} />
-                      </View>
-                      <View style={styles.uploadedFileMeta}>
-                        <Text style={styles.uploadedFileName} numberOfLines={1}>
-                          {uploadedDocument.name}
-                        </Text>
-                        <Text style={styles.uploadedFileSize}>
-                          {(uploadedDocument.size / (1024 * 1024)).toFixed(2)} MB • {uploadedDocument.pageCount} Pages ({uploadedDocument.colorPageCount} Color, {uploadedDocument.bwPageCount} B&W)
-                        </Text>
-                        <View style={styles.verifiedRow}>
-                          <CheckCircle2 size={13} color={COLORS.success} />
-                          <Text style={styles.verifiedText}>
-                            {uploadedDocument.validationMessage || 'PDF preflight verified • Ready for printing'}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-
-                    {/* Actions */}
-                    <View style={styles.uploadActionsRow}>
-                      <TouchableOpacity 
-                        style={styles.actionBtnSecondary}
-                        onPress={() => navigateTo('book_preview')}
-                      >
-                        <Eye size={15} color={COLORS.navy} />
-                        <Text style={styles.actionBtnSecondaryText}>Open Book Preview</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity 
-                        style={styles.actionBtnSecondary}
-                        onPress={() => {
-                          if (Platform.OS === 'web') fileInputRef.current?.click();
-                        }}
-                      >
-                        <RotateCcw size={15} color={COLORS.navy} />
-                        <Text style={styles.actionBtnSecondaryText}>Replace File</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity 
-                        style={styles.actionBtnDelete}
-                        onPress={() => setUploadedDocument(null)}
-                      >
-                        <Trash2 size={15} color={COLORS.error} />
-                        <Text style={styles.actionBtnDeleteText}>Remove</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ) : (
+                {/* Image 6 Upload UI Design */}
+                <View style={styles.image6UploadContainer}>
                   <View 
                     style={[
-                      styles.dropZone,
-                      isDragOver && { borderColor: COLORS.darkOrange, backgroundColor: 'rgba(234, 88, 12, 0.05)' }
+                      styles.image6DashedBox,
+                      isDragOver && styles.image6DashedBoxActive
                     ]}
                     {...({
                       onDragOver: (e: any) => {
@@ -307,32 +271,65 @@ export const CustomizeScreen: React.FC = () => {
                       }
                     } as any)}
                   >
-                    {isUploading ? (
-                      <View style={styles.uploadingState}>
-                        <ActivityIndicator size="large" color={COLORS.darkOrange} />
-                        <Text style={styles.uploadingText}>Verifying preflight margins & pages...</Text>
+                    {/* Layered Card Graphic with Arrow */}
+                    <View style={styles.layeredIconWrap}>
+                      <View style={styles.layeredIconBack} />
+                      <View style={styles.layeredIconFront}>
+                        <UploadCloud size={20} color="#CBD5E1" />
                       </View>
-                    ) : (
-                      <>
-                        <UploadCloud size={46} color={COLORS.darkOrange} />
-                        <Text style={styles.dropZoneTitle}>Select your Project Document</Text>
-                        <Text style={styles.dropZoneSub}>
-                          Accepts PDF, DOC, DOCX up to 100MB
-                        </Text>
-                        <TouchableOpacity 
-                          style={styles.browseFilesBtn}
-                          onPress={() => {
-                            if (Platform.OS === 'web') fileInputRef.current?.click();
-                          }}
-                        >
-                          <UploadCloud size={16} color={COLORS.white} />
-                          <Text style={styles.browseFilesBtnText}>Browse Files</Text>
-                        </TouchableOpacity>
-                        {uploadError && <Text style={styles.errorBanner}>{uploadError}</Text>}
-                      </>
+                    </View>
+
+                    <Text style={styles.image6UploadTitle}>Click to upload or drop files</Text>
+                    <Text style={styles.image6UploadSub}>PDF, DOC/DOCX, XLSX, CSV, PNG, or JPG</Text>
+
+                    <TouchableOpacity 
+                      style={styles.image6BrowseBtn}
+                      onPress={() => {
+                        if (Platform.OS === 'web') fileInputRef.current?.click();
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <UploadCloud size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
+                      <Text style={styles.image6BrowseBtnText}>Browse files</Text>
+                    </TouchableOpacity>
+
+                    {isUploading && (
+                      <View style={styles.image6UploadingIndicator}>
+                        <ActivityIndicator size="small" color="#F59E0B" />
+                        <Text style={styles.image6UploadingText}>Analyzing manuscript & preflight margins...</Text>
+                      </View>
                     )}
+                    {uploadError && <Text style={styles.image6ErrorText}>{uploadError}</Text>}
                   </View>
-                )}
+
+                  {/* Uploaded File Pill Card matching Image 6 */}
+                  {uploadedDocument ? (
+                    <View style={styles.image6FileCard}>
+                      <View style={styles.image6FileLeft}>
+                        <View style={styles.image6FileIconWrap}>
+                          <FileText size={18} color="#94A3B8" />
+                        </View>
+                        <View style={{ flex: 1, paddingRight: 8 }}>
+                          <Text style={styles.image6FileName} numberOfLines={1}>{uploadedDocument.name}</Text>
+                          <Text style={styles.image6FileMeta}>
+                            {uploadedDocument.fileType?.toUpperCase() || 'PDF'} • {(uploadedDocument.size / 1024).toFixed(1)} KB • {uploadedDocument.pageCount} Pages
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.image6RightWrap}>
+                        <View style={styles.image6ReadyBadge}>
+                          <Text style={styles.image6ReadyBadgeText}>Ready</Text>
+                        </View>
+                        <TouchableOpacity 
+                          style={styles.image6RemoveBtn}
+                          onPress={() => setUploadedDocument(null)}
+                        >
+                          <Trash2 size={13} color="#EF4444" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : null}
+                </View>
 
                 <View style={styles.preflightNoticeBox}>
                   <ShieldCheck size={18} color={COLORS.oceanBlue} />
@@ -1784,5 +1781,160 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#9A3412',
     flex: 1,
+  },
+  // Image 6 Upload UI Styles
+  image6UploadContainer: {
+    backgroundColor: '#0F131A',
+    borderRadius: RADIUS.lg,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    marginBottom: SPACING.md,
+  },
+  image6DashedBox: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#334155',
+    borderRadius: RADIUS.md,
+    paddingVertical: 32,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  image6DashedBoxActive: {
+    borderColor: COLORS.darkOrange,
+    backgroundColor: 'rgba(234, 88, 12, 0.05)',
+  },
+  layeredIconWrap: {
+    width: 44,
+    height: 40,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  layeredIconBack: {
+    position: 'absolute',
+    width: 32,
+    height: 28,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: '#475569',
+    backgroundColor: '#1E293B',
+    transform: [{ rotate: '-8deg' }],
+  },
+  layeredIconFront: {
+    width: 32,
+    height: 28,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: '#64748B',
+    backgroundColor: '#0F172A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  image6UploadTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  image6UploadSub: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#94A3B8',
+    marginBottom: 14,
+    textAlign: 'center',
+  },
+  image6BrowseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#334155',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: RADIUS.full,
+  },
+  image6BrowseBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  image6UploadingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  image6UploadingText: {
+    color: '#F59E0B',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  image6ErrorText: {
+    color: '#EF4444',
+    fontSize: 12,
+    marginTop: 8,
+  },
+  image6FileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#161E2E',
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 14,
+  },
+  image6FileLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  image6FileIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 6,
+    backgroundColor: '#1E293B',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  image6FileName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#F1F5F9',
+  },
+  image6FileMeta: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  image6RightWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  image6ReadyBadge: {
+    backgroundColor: '#1E293B',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  image6ReadyBadgeText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  image6RemoveBtn: {
+    padding: 4,
   },
 });

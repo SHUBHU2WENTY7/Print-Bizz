@@ -8,7 +8,8 @@ import {
   Order, 
   UploadedDocument, 
   PriceBreakdown,
-  AppNotification
+  AppNotification,
+  UserProfile
 } from '../types';
 import { BLACK_BOOK_PRODUCTS, INITIAL_CUSTOMIZATION } from '../constants/products';
 import { calculatePrice } from '../services/pricingService';
@@ -16,6 +17,7 @@ import { api, MOCK_EXISTING_ORDERS, MOCK_SAVED_ADDRESSES, INITIAL_TRACKING_STAGE
 
 export type ScreenName = 
   | 'home'
+  | 'auth_onboarding'
   | 'explore'
   | 'product_details'
   | 'customize'
@@ -111,14 +113,10 @@ interface AppStore {
   markAllNotificationsAsRead: () => void;
   deleteNotification: (id: string) => void;
 
-  // Profile
-  userProfile: {
-    name: string;
-    email: string;
-    phone: string;
-    college: string;
-  };
-  updateUserProfile: (profile: Partial<AppStore['userProfile']>) => void;
+  // Profile & Onboarding
+  userProfile: UserProfile;
+  registerUser: (profile: UserProfile) => void;
+  updateUserProfile: (profile: Partial<UserProfile>) => void;
 
   // Wishlist
   wishlist: string[];
@@ -565,7 +563,56 @@ export const useAppStore = create<AppStore>((set, get) => ({
     name: 'Aarav Sharma',
     email: 'aarav.sharma@vjti.ac.in',
     phone: '+91 98201 44521',
-    college: 'Veermata Jijabai Technological Institute (VJTI), Mumbai',
+    state: 'Maharashtra',
+    city: 'Mumbai',
+    college: 'Veermata Jijabai Technological Institute (VJTI)',
+    collegeAddress: 'H. R. Mahajani Road, Matunga East, Mumbai, Maharashtra 400019',
+    university: 'University of Mumbai',
+    rollNumber: '221080045',
+    idCardFront: null,
+    idCardBack: null,
+    isRegistered: true,
+  },
+  registerUser: (profile) => {
+    set((state) => {
+      const campusAddress: CustomerAddress = {
+        id: 'addr_campus_' + Date.now(),
+        label: 'College Campus',
+        recipientName: profile.name,
+        phone: profile.phone,
+        line1: profile.college,
+        area: profile.collegeAddress || profile.city,
+        city: profile.city,
+        pincode: '400019',
+        isDefault: true,
+        instructions: 'Deliver to Department Security or Student Reception Desk',
+      };
+
+      const updatedAddresses = [
+        campusAddress,
+        ...state.addresses.map((a) => ({ ...a, isDefault: false })),
+      ];
+
+      const updatedCover = {
+        ...state.customization.cover,
+        studentName: profile.name,
+        collegeName: profile.college,
+        university: profile.university,
+        rollNumber: profile.rollNumber,
+      };
+
+      return {
+        userProfile: { ...profile, isRegistered: true },
+        addresses: updatedAddresses,
+        selectedAddressId: campusAddress.id,
+        customization: {
+          ...state.customization,
+          cover: updatedCover,
+        },
+        currentScreen: 'home',
+        screenHistory: ['home'],
+      };
+    });
   },
   updateUserProfile: (profile) => {
     set((state) => ({

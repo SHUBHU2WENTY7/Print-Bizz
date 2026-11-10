@@ -4,12 +4,12 @@ import {
   Text, 
   StyleSheet, 
   ScrollView, 
-  TouchableOpacity, 
-  Image
+  TouchableOpacity
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
 import { BLACK_BOOK_PRODUCTS } from '../constants/products';
+import { BlackBookCoverThumbnail } from '../components/BlackBookCoverThumbnail';
 import { 
   BookOpen, 
   CheckCircle2, 
@@ -142,15 +142,12 @@ export const ExploreScreen: React.FC = () => {
             <View style={styles.editionsGrid}>
               {BLACK_BOOK_PRODUCTS.map((edition) => (
                 <View key={edition.id} style={styles.editionCard}>
-                  <View style={styles.editionImageWrap}>
-                    <Image source={{ uri: edition.image }} style={styles.editionImage} resizeMode="cover" />
-                    <View style={styles.badgeTag}>
-                      <Text style={styles.badgeTagText}>{edition.badge}</Text>
-                    </View>
-                    <View style={styles.priceTag}>
-                      <Text style={styles.priceTagText}>From ₹{edition.startingPrice}</Text>
-                    </View>
-                  </View>
+                  <BlackBookCoverThumbnail 
+                    editionName={edition.name}
+                    badge={edition.badge}
+                    startingPrice={edition.startingPrice}
+                    height={150}
+                  />
 
                   <View style={styles.editionBody}>
                     <Text style={styles.editionName}>{edition.name}</Text>

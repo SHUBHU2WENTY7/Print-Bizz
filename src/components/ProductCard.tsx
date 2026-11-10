@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { BlackBookProduct } from '../types';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
 import { Star, Heart, ArrowRight } from 'lucide-react-native';
+import { BlackBookCoverThumbnail } from './BlackBookCoverThumbnail';
 
 interface ProductCardProps {
   product: BlackBookProduct;
@@ -58,24 +59,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         onPress={handleOpenDetails}
         activeOpacity={0.9}
       >
-        <Image 
-          source={{ uri: product.image }} 
-          style={styles.image}
-          resizeMode="cover"
+        <BlackBookCoverThumbnail 
+          editionName={product.name}
+          badge={discountPercent ? `${discountPercent}% OFF` : product.badge}
+          startingPrice={product.startingPrice}
+          height={layout === 'horizontal' ? 130 : 150}
         />
-        
-        {/* Badges Overlay */}
-        <View style={styles.badgeOverlay}>
-          {discountPercent ? (
-            <View style={styles.discountBadge}>
-              <Text style={styles.discountBadgeText}>{discountPercent}% OFF</Text>
-            </View>
-          ) : product.badge ? (
-            <View style={styles.promoBadge}>
-              <Text style={styles.promoBadgeText}>{product.badge}</Text>
-            </View>
-          ) : null}
-        </View>
 
         {/* Wishlist Button */}
         <TouchableOpacity 
