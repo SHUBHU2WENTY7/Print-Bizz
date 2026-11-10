@@ -72,6 +72,7 @@ interface AppStore {
   clearCart: () => void;
   cartTotalCount: () => number;
   editCartItem: (itemId: string) => void;
+  updateCartItemCustomization: (itemId: string, updatedCust: Partial<CustomizationState>) => void;
 
   // Addresses
   addresses: CustomerAddress[];
@@ -367,6 +368,36 @@ export const useAppStore = create<AppStore>((set, get) => ({
         screenHistory: [...state.screenHistory, 'customize'],
       });
     }
+  },
+  updateCartItemCustomization: (itemId, updatedCust) => {
+    set((state) => {
+      const updatedCart = state.cart.map((item) => {
+        if (item.id === itemId) {
+          const mergedCover = updatedCust.cover
+            ? { ...item.customization.cover, ...updatedCust.cover }
+            : item.customization.cover;
+          const mergedAddOns = updatedCust.addOns
+            ? { ...item.customization.addOns, ...updatedCust.addOns }
+            : item.customization.addOns;
+
+          const mergedCust: CustomizationState = {
+            ...item.customization,
+            ...updatedCust,
+            cover: mergedCover,
+            addOns: mergedAddOns,
+          };
+
+          const newPricing = calculatePrice(mergedCust, item.document?.pageCount);
+          return {
+            ...item,
+            customization: mergedCust,
+            pricing: newPricing,
+          };
+        }
+        return item;
+      });
+      return { cart: updatedCart };
+    });
   },
 
   // Addresses

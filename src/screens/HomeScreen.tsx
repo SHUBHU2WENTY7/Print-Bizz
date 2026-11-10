@@ -5,110 +5,65 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
-  Image, 
-  Platform 
+  Dimensions
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { BLACK_BOOK_PRODUCTS } from '../constants/products';
 import { useAppStore } from '../store/useAppStore';
 import { ProductCard } from '../components/ProductCard';
+import { InteractiveBook } from '../components/InteractiveBook';
 import { 
   BookOpen, 
-  UploadCloud, 
   Sliders, 
   Truck, 
-  ShieldCheck, 
   Award, 
-  Clock, 
   ChevronRight, 
-  HelpCircle, 
   Sparkles, 
   CheckCircle, 
-  PhoneCall,
   ArrowRight,
   FileCheck,
-  Package,
-  Layers,
-  Star
+  Star,
+  GraduationCap
 } from 'lucide-react-native';
 
 export const HomeScreen: React.FC = () => {
-  const { navigateTo, selectProduct, setFilterState } = useAppStore();
+  const { navigateTo, selectProduct } = useAppStore();
 
-  const handleStartCustomizing = () => {
-    selectProduct('customized-black-book');
+  const handleStartCustomizing = (productId?: string) => {
+    selectProduct(productId || 'customized-black-book');
     navigateTo('customize');
   };
 
-  const handleCategoryClick = (categoryName: string) => {
-    setFilterState({ category: categoryName });
-    navigateTo('explore');
-  };
+  const windowWidth = Dimensions.get('window').width;
+  const heroBookWidth = Math.min(320, Math.max(260, windowWidth - 64));
+  const heroBookHeight = Math.round(heroBookWidth * 1.45);
 
-  const categories = [
-    {
-      name: 'Black Books',
-      desc: 'University guideline editions',
-      image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80',
-    },
-    {
-      name: 'Project Books',
-      desc: 'Engineering & MBA capstones',
-      image: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=400&q=80',
-    },
-    {
-      name: 'Thesis Binding',
-      desc: 'Doctoral & masters dissertations',
-      image: 'https://images.unsplash.com/photo-1532012164546-f432f2e3777f?auto=format&fit=crop&w=400&q=80',
-    },
-    {
-      name: 'Spiral Binding',
-      desc: 'Twin-loop Wire-O reports',
-      image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=400&q=80',
-    },
-    {
-      name: 'Hardcover Binding',
-      desc: 'Rigid gold/silver foil cases',
-      image: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=400&q=80',
-    },
-    {
-      name: 'Printing Services',
-      desc: 'High-DPI laser mono & color',
-      image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=400&q=80',
-    },
-    {
-      name: 'Stationery',
-      desc: 'CD pockets & certificate tissue',
-      image: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=400&q=80',
-    },
-  ];
-
-  const bestSellers = BLACK_BOOK_PRODUCTS.slice(0, 4);
-  const featuredProducts = BLACK_BOOK_PRODUCTS.slice(2, 6);
+  const blackBookEditions = BLACK_BOOK_PRODUCTS;
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* 1. HERO SECTION */}
+      {/* 1. HERO SECTION WITH LIVE 3D BLACK BOOK */}
       <View style={styles.heroSection}>
         <View style={styles.heroContentWrap}>
+          {/* Left Text Column */}
           <View style={styles.heroTextCol}>
             <View style={styles.heroBadge}>
               <Sparkles size={13} color={COLORS.darkOrange} />
-              <Text style={styles.heroBadgeText}>OFFICIAL ACADEMIC PRINTING & BINDING</Text>
+              <Text style={styles.heroBadgeText}>OFFICIAL UNIVERSITY BLACK BOOK MAKER</Text>
             </View>
 
             <Text style={styles.heroHeading}>
-              Your Academic Projects.{'\n'}Professionally Printed.
+              Your University Black Book.{'\n'}Crafted to Perfection.
             </Text>
             
             <Text style={styles.heroSubtitle}>
-              Customize, preview and order your university black books with complete control over paper GSM, foil embossing, and rigid hardcover binding.
+              Strictly compliant with official university guidelines. Custom gold & silver thermal foil stamping, archival bond paper, rigid hardcover binding, and live 3D preview before printing.
             </Text>
 
             <View style={styles.heroCtaRow}>
               <TouchableOpacity 
                 style={styles.heroPrimaryBtn}
-                onPress={handleStartCustomizing}
+                onPress={() => handleStartCustomizing('customized-black-book')}
                 activeOpacity={0.85}
               >
                 <Text style={styles.heroPrimaryBtnText}>Create Your Black Book</Text>
@@ -120,7 +75,7 @@ export const HomeScreen: React.FC = () => {
                 onPress={() => navigateTo('explore')}
                 activeOpacity={0.85}
               >
-                <Text style={styles.heroSecondaryBtnText}>Explore Products</Text>
+                <Text style={styles.heroSecondaryBtnText}>Explore Editions & Specs</Text>
               </TouchableOpacity>
             </View>
 
@@ -128,32 +83,39 @@ export const HomeScreen: React.FC = () => {
             <View style={styles.heroTrustRow}>
               <View style={styles.trustItem}>
                 <CheckCircle size={15} color={COLORS.success} />
-                <Text style={styles.trustText}>University Guidelines Compliant</Text>
+                <Text style={styles.trustText}>University Compliant Formats</Text>
               </View>
               <View style={styles.trustItem}>
                 <CheckCircle size={15} color={COLORS.success} />
-                <Text style={styles.trustText}>Live 3D Virtual Book Preview</Text>
+                <Text style={styles.trustText}>Thermal Foil Embossing</Text>
               </View>
               <View style={styles.trustItem}>
                 <CheckCircle size={15} color={COLORS.success} />
-                <Text style={styles.trustText}>Doorstep Courier Delivery</Text>
+                <Text style={styles.trustText}>Prompt Doorstep Courier</Text>
               </View>
             </View>
           </View>
 
-          {/* Hero Image Showcase */}
+          {/* Right Showcase Column: Real Interactive 3D Black Book */}
           <View style={styles.heroImageCol}>
-            <View style={styles.heroImageCard}>
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1000&q=80' }}
-                style={styles.heroImage}
-                resizeMode="cover"
+            <View style={styles.heroInteractiveContainer}>
+              <InteractiveBook
+                bookTitle="AI-POWERED DISTRIBUTED SUPPLY CHAIN OPTIMIZATION"
+                bookAuthor="Aarav Sharma"
+                collegeName="Veermata Jijabai Technological Institute (VJTI)"
+                rollNumber="221080045"
+                degreeBranch="B.Tech in Computer Engineering"
+                academicYear="2025-2026"
+                guideName="Dr. Ramesh Kulkarni, Professor"
+                embossingFoil="Gold Foil"
+                width={heroBookWidth}
+                height={heroBookHeight}
               />
               <View style={styles.floatingPreviewCard}>
-                <BookOpen size={16} color={COLORS.darkOrange} />
+                <Sparkles size={16} color={COLORS.darkOrange} />
                 <View>
-                  <Text style={styles.floatingCardTitle}>Gold Foil Stamped Hardbound</Text>
-                  <Text style={styles.floatingCardSub}>80 GSM Bond • Double-Sided</Text>
+                  <Text style={styles.floatingCardTitle}>Interactive 3D Preview</Text>
+                  <Text style={styles.floatingCardSub}>Click the cover above to open & flip inside pages</Text>
                 </View>
               </View>
             </View>
@@ -161,83 +123,46 @@ export const HomeScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* 2. SHOP BY CATEGORY */}
+      {/* 2. BLACK BOOK EDITIONS SHOWCASE */}
       <View style={styles.sectionWrap}>
         <View style={styles.sectionHeaderRow}>
           <View>
-            <Text style={styles.sectionPreTitle}>ACADEMIC CATALOG</Text>
-            <Text style={styles.sectionTitle}>Shop by Category</Text>
+            <Text style={styles.sectionPreTitle}>OFFICIAL EDITIONS</Text>
+            <Text style={styles.sectionTitle}>Choose Your Black Book Edition</Text>
           </View>
           <TouchableOpacity 
             style={styles.viewAllBtn}
             onPress={() => navigateTo('explore')}
           >
-            <Text style={styles.viewAllBtnText}>View All</Text>
-            <ChevronRight size={15} color={COLORS.oceanBlue} />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={styles.categoryCardsRow}
-        >
-          {categories.map((cat) => (
-            <TouchableOpacity
-              key={cat.name}
-              style={styles.categoryCard}
-              onPress={() => handleCategoryClick(cat.name)}
-              activeOpacity={0.85}
-            >
-              <Image source={{ uri: cat.image }} style={styles.categoryImage} resizeMode="cover" />
-              <View style={styles.categoryOverlay}>
-                <Text style={styles.categoryName}>{cat.name}</Text>
-                <Text style={styles.categoryDesc}>{cat.desc}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* 3. BEST SELLERS GRID (4-column responsive grid) */}
-      <View style={styles.sectionWrap}>
-        <View style={styles.sectionHeaderRow}>
-          <View>
-            <Text style={styles.sectionPreTitle}>STUDENT FAVORITES</Text>
-            <Text style={styles.sectionTitle}>Best Sellers</Text>
-          </View>
-          <TouchableOpacity 
-            style={styles.viewAllBtn}
-            onPress={() => navigateTo('explore')}
-          >
-            <Text style={styles.viewAllBtnText}>See More</Text>
+            <Text style={styles.viewAllBtnText}>Compare Specs</Text>
             <ChevronRight size={15} color={COLORS.oceanBlue} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.productsGrid}>
-          {bestSellers.map((prod) => (
+          {blackBookEditions.map((prod) => (
             <ProductCard key={prod.id} product={prod} />
           ))}
         </View>
       </View>
 
-      {/* 4. SUBWAY CUSTOMIZATION PROMOTIONAL STRIP */}
+      {/* 3. STEP-BY-STEP SUBWAY CUSTOMIZATION PROMOTIONAL STRIP */}
       <View style={styles.subwayPromoStrip}>
         <View style={styles.subwayPromoContent}>
           <View style={styles.subwayBadge}>
-            <Sliders size={14} color={COLORS.darkOrange} />
+            <Sliders size={14} color="#FB923C" />
             <Text style={styles.subwayBadgeText}>SUBWAY-STYLE CUSTOMIZATION</Text>
           </View>
           <Text style={styles.subwayHeading}>
-            Build Your Black Book Step-by-Step
+            Build Your Black Book in 5 Seamless Steps
           </Text>
           <Text style={styles.subwaySubtext}>
-            Pick your product, upload your PDF or Word document, choose paper GSM and cover foil, and inspect your live price in real time.
+            Upload your document, configure paper GSM and cover foil, inspect your virtual 3D book, and order with 100% submission confidence.
           </Text>
           <TouchableOpacity 
             style={styles.subwayCtaBtn}
-            onPress={handleStartCustomizing}
+            onPress={() => handleStartCustomizing()}
+            activeOpacity={0.85}
           >
             <Text style={styles.subwayCtaBtnText}>Start Customizing Now</Text>
             <ArrowRight size={16} color={COLORS.white} />
@@ -245,66 +170,43 @@ export const HomeScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* 5. FEATURED & EXECUTIVE EDITIONS */}
-      <View style={styles.sectionWrap}>
-        <View style={styles.sectionHeaderRow}>
-          <View>
-            <Text style={styles.sectionPreTitle}>PREMIUM CRAFTSMANSHIP</Text>
-            <Text style={styles.sectionTitle}>Featured Products</Text>
-          </View>
-          <TouchableOpacity 
-            style={styles.viewAllBtn}
-            onPress={() => navigateTo('explore')}
-          >
-            <Text style={styles.viewAllBtnText}>View Catalog</Text>
-            <ChevronRight size={15} color={COLORS.oceanBlue} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.productsGrid}>
-          {featuredProducts.map((prod) => (
-            <ProductCard key={prod.id} product={prod} />
-          ))}
-        </View>
-      </View>
-
-      {/* 6. WHY CHOOSE PRINT BIZZ */}
+      {/* 4. CRAFTSMANSHIP & UNIVERSITY STANDARDS */}
       <View style={styles.benefitsSection}>
         <View style={styles.benefitsContentWrap}>
           <View style={styles.centerHeadingWrap}>
-            <Text style={styles.sectionPreTitleCenter}>OUR COMMITMENT</Text>
-            <Text style={styles.sectionTitleCenter}>Why Choose Print Bizz?</Text>
+            <Text style={styles.sectionPreTitleCenter}>ACADEMIC EXCELLENCE</Text>
+            <Text style={styles.sectionTitleCenter}>Engineered for University Acceptance</Text>
             <Text style={styles.sectionSubtitleCenter}>
-              Engineered to make academic printing stress-free, accurate, and completely transparent.
+              Every detail adheres strictly to university thesis guidelines for margin clearances, font hierarchy, and archival binding durability.
             </Text>
           </View>
 
           <View style={styles.benefitsGrid}>
             {[
               {
-                icon: <Sliders size={22} color={COLORS.darkOrange} />,
-                title: 'Customizable Printing',
-                desc: 'Tailor paper GSM, monochrome or full color, single or double sided printing to your university requirements.',
+                icon: <Award size={22} color={COLORS.darkOrange} />,
+                title: 'Thermal Foil Embossing',
+                desc: 'Deep heated metallic gold or silver foil letters that never flake, rub off, or fade under handling.',
               },
               {
-                icon: <Award size={22} color={COLORS.navy} />,
-                title: 'Premium Binding',
-                desc: 'Heavyboard hardcover binding with genuine heated thermal gold or silver foil embossing and reinforced spines.',
+                icon: <FileCheck size={22} color={COLORS.navy} />,
+                title: 'Archival Bond Paper',
+                desc: 'Acid-free 80 GSM / 100 GSM executive bond sheets with high opacity to eliminate show-through.',
               },
               {
-                icon: <FileCheck size={22} color={COLORS.oceanBlue} />,
-                title: 'Real Document Preview',
-                desc: 'Turn pages of your actual uploaded PDF or Word document in our 3D hardcover preview before placing your order.',
+                icon: <BookOpen size={22} color={COLORS.oceanBlue} />,
+                title: 'Rigid Heavyboard Binding',
+                desc: 'Reinforced multi-ply bookbinding board engineered to withstand viva handling and university archival storage.',
               },
               {
-                icon: <ShieldCheck size={22} color={COLORS.success} />,
-                title: 'Academic Quality Materials',
-                desc: 'Acid-free archive-grade bond paper guaranteed to prevent ink show-through and preserve your project for years.',
+                icon: <GraduationCap size={22} color={COLORS.success} />,
+                title: 'University Format Compliant',
+                desc: 'Precise margin tolerances for Mumbai University, SPPU, VTU, Anna University, and others.',
               },
               {
                 icon: <Truck size={22} color={COLORS.darkOrange} />,
-                title: 'Convenient Doorstep Ordering',
-                desc: 'Skip printing queues. Order right from your laptop or phone with live order tracking and prompt delivery.',
+                title: 'Weatherproof Packaging',
+                desc: 'Double bubble-cushioned and moisture-sealed packaging delivered right to your college or home.',
               },
             ].map((b, idx) => (
               <View key={idx} style={styles.benefitCard}>
@@ -317,7 +219,7 @@ export const HomeScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* 7. HOW IT WORKS (4 Simple Steps) */}
+      {/* 5. HOW IT WORKS */}
       <View style={styles.sectionWrap}>
         <View style={styles.centerHeadingWrap}>
           <Text style={styles.sectionPreTitleCenter}>SIMPLE ORDERING</Text>
@@ -331,23 +233,23 @@ export const HomeScreen: React.FC = () => {
           {[
             {
               step: '1',
-              title: 'Choose Product',
-              desc: 'Select from College Standard, Capstone, or PhD Thesis Binding.',
+              title: 'Select Edition',
+              desc: 'Choose Standard, Executive Deluxe, or Doctoral Thesis Black Book.',
             },
             {
               step: '2',
               title: 'Upload Document',
-              desc: 'Select your genuine PDF, DOC, or DOCX document with instant preflight.',
+              desc: 'Attach your genuine PDF or Word document with automated preflight validation.',
             },
             {
               step: '3',
               title: 'Customize Specs',
-              desc: 'Select GSM weight, color pages, cover foil, and input project details.',
+              desc: 'Input student name, roll number, college, paper GSM, and foil color.',
             },
             {
               step: '4',
-              title: 'Preview & Order',
-              desc: 'Inspect your virtual black book, confirm pricing, and place order.',
+              title: 'Live 3D Preview',
+              desc: 'Turn pages of your 3D Black Book in real time before checkout.',
             },
           ].map((st) => (
             <View key={st.step} style={styles.stepCard}>
@@ -361,11 +263,59 @@ export const HomeScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* 8. PROFESSIONAL E-COMMERCE FOOTER */}
+      {/* 6. VERIFIED STUDENT REVIEWS */}
+      <View style={styles.reviewsSection}>
+        <View style={styles.benefitsContentWrap}>
+          <View style={styles.centerHeadingWrap}>
+            <Text style={styles.sectionPreTitleCenter}>STUDENT EXPERIENCES</Text>
+            <Text style={styles.sectionTitleCenter}>Trusted by 10,000+ Students</Text>
+            <Text style={styles.sectionSubtitleCenter}>
+              Hear from engineering, MBA, and PhD scholars who submitted their Black Books through Print Bizz.
+            </Text>
+          </View>
+
+          <View style={styles.reviewsGrid}>
+            {[
+              {
+                name: 'Rohan Deshmukh',
+                college: 'VJTI, Mumbai • Computer Engineering',
+                review: 'The gold foil stamping and binding quality was unmatched. The examiner specifically praised the clean typography and butter paper certificate separators. Delivered in 36 hours!',
+                rating: 5,
+              },
+              {
+                name: 'Priya Sundaram',
+                college: 'College of Engineering Pune (COEP) • Mechanical',
+                review: 'The live 3D book preview gave me so much peace of mind. Seeing my project title and student name embossed in gold before paying was amazing. 10/10 recommendation.',
+                rating: 5,
+              },
+              {
+                name: 'Ananya Roy',
+                college: 'Delhi Technological University (DTU) • MBA',
+                review: 'I ordered 4 copies for my guide and university library. The volume discount was great, and the executive leatherette rexine finish looked super luxurious.',
+                rating: 5,
+              },
+            ].map((rev, idx) => (
+              <View key={idx} style={styles.reviewCard}>
+                <View style={styles.starsRow}>
+                  {Array.from({ length: rev.rating }).map((_, i) => (
+                    <Star key={i} size={15} color="#F59E0B" fill="#F59E0B" />
+                  ))}
+                </View>
+                <Text style={styles.reviewText}>&ldquo;{rev.review}&rdquo;</Text>
+                <View style={styles.reviewerMeta}>
+                  <Text style={styles.reviewerName}>{rev.name}</Text>
+                  <Text style={styles.reviewerCollege}>{rev.college}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+
+      {/* 7. FOOTER */}
       <View style={styles.footerSection}>
         <View style={styles.footerContentWrap}>
           <View style={styles.footerColsRow}>
-            {/* Brand Column */}
             <View style={styles.footerBrandCol}>
               <View style={styles.footerLogoRow}>
                 <BookOpen size={20} color={COLORS.white} />
@@ -373,39 +323,26 @@ export const HomeScreen: React.FC = () => {
                 <Text style={styles.footerBrandAccent}>BIZZ</Text>
               </View>
               <Text style={styles.footerBrandDesc}>
-                {"India's premier e-commerce platform for academic printing, thesis binding, and university black books."}
+                Official academic printing and university black book platform. Compliant with top universities across India.
               </Text>
               <Text style={styles.footerCopyright}>
                 © 2026 Print Bizz Technologies Pvt Ltd. All rights reserved.
               </Text>
             </View>
 
-            {/* Products Column */}
             <View style={styles.footerLinksCol}>
-              <Text style={styles.footerColHeading}>Products</Text>
-              <TouchableOpacity onPress={() => handleCategoryClick('Black Books')}><Text style={styles.footerLink}>University Black Books</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => handleCategoryClick('Project Books')}><Text style={styles.footerLink}>Project Reports</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => handleCategoryClick('Thesis Binding')}><Text style={styles.footerLink}>PhD Thesis Hardbound</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => handleCategoryClick('Spiral Binding')}><Text style={styles.footerLink}>Wire-O Spiral Binding</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => handleCategoryClick('Printing Services')}><Text style={styles.footerLink}>High-DPI Laser Printing</Text></TouchableOpacity>
+              <Text style={styles.footerColHeading}>Black Book Editions</Text>
+              <TouchableOpacity onPress={() => handleStartCustomizing('customized-black-book')}><Text style={styles.footerLink}>University Standard Edition</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => handleStartCustomizing('deluxe-black-book')}><Text style={styles.footerLink}>Executive Deluxe Edition</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => handleStartCustomizing('doctoral-black-book')}><Text style={styles.footerLink}>Doctoral & PhD Thesis Edition</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => navigateTo('book_preview')}><Text style={styles.footerLink}>3D Live Book Preview</Text></TouchableOpacity>
             </View>
 
-            {/* Customer Care Column */}
             <View style={styles.footerLinksCol}>
-              <Text style={styles.footerColHeading}>Customer Care</Text>
-              <TouchableOpacity onPress={() => navigateTo('support')}><Text style={styles.footerLink}>Help Centre & FAQs</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => navigateTo('my_orders')}><Text style={styles.footerLink}>Track Your Order</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => navigateTo('support')}><Text style={styles.footerLink}>Shipping Policy</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => navigateTo('support')}><Text style={styles.footerLink}>Returns & Refunds</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => navigateTo('support')}><Text style={styles.footerLink}>Contact Support</Text></TouchableOpacity>
-            </View>
-
-            {/* Legal Column */}
-            <View style={styles.footerLinksCol}>
-              <Text style={styles.footerColHeading}>Policies & Legal</Text>
-              <TouchableOpacity onPress={() => navigateTo('support')}><Text style={styles.footerLink}>Privacy Policy</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => navigateTo('support')}><Text style={styles.footerLink}>Terms & Conditions</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => navigateTo('support')}><Text style={styles.footerLink}>Security & Data Protection</Text></TouchableOpacity>
+              <Text style={styles.footerColHeading}>Support & Policies</Text>
+              <TouchableOpacity onPress={() => navigateTo('support')}><Text style={styles.footerLink}>University Guidelines FAQs</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => navigateTo('my_orders')}><Text style={styles.footerLink}>Track Courier Delivery</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => navigateTo('support')}><Text style={styles.footerLink}>Margin & Preflight Help</Text></TouchableOpacity>
               <TouchableOpacity onPress={() => navigateTo('support')}><Text style={styles.footerLink}>Academic Integrity Statement</Text></TouchableOpacity>
             </View>
           </View>
@@ -420,7 +357,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  // Hero Styles
   heroSection: {
     backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
@@ -435,6 +371,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: SPACING.xl,
   },
   heroTextCol: {
@@ -478,6 +415,7 @@ const styles = StyleSheet.create({
   heroCtaRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: SPACING.md,
     marginBottom: SPACING.xl,
   },
@@ -530,53 +468,39 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 320,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  heroImageCard: {
-    width: '100%',
-    maxWidth: 460,
-    height: 310,
-    borderRadius: RADIUS.lg,
-    overflow: 'hidden',
+  heroInteractiveContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: COLORS.shadowColor,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  heroImage: {
-    width: '100%',
-    height: '100%',
   },
   floatingPreviewCard: {
-    position: 'absolute',
-    bottom: 14,
-    left: 14,
-    right: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    marginTop: 12,
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.md,
-    padding: SPACING.sm + 2,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
   },
   floatingCardTitle: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     color: COLORS.navy,
   },
   floatingCardSub: {
     fontSize: 11,
     color: COLORS.secondaryText,
   },
-  // Section Styles
   sectionWrap: {
     maxWidth: 1240,
     width: '100%',
@@ -612,51 +536,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.oceanBlue,
   },
-  // Category Cards
-  categoryCardsRow: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-    paddingVertical: 4,
-  },
-  categoryCard: {
-    width: 170,
-    height: 180,
-    borderRadius: RADIUS.md,
-    overflow: 'hidden',
-    position: 'relative',
-    backgroundColor: COLORS.navy,
-  },
-  categoryImage: {
-    width: '100%',
-    height: '100%',
-    opacity: 0.75,
-  },
-  categoryOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: SPACING.sm + 2,
-    backgroundColor: 'rgba(10, 25, 47, 0.85)',
-  },
-  categoryName: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: COLORS.white,
-  },
-  categoryDesc: {
-    fontSize: 10,
-    color: '#CBD5E1',
-    marginTop: 2,
-  },
-  // Products Grid
   productsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.md,
     justifyContent: 'flex-start',
   },
-  // Subway Promo Strip
   subwayPromoStrip: {
     backgroundColor: '#0A192F',
     paddingVertical: SPACING.xxl,
@@ -715,7 +600,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
   },
-  // Benefits Section
   benefitsSection: {
     backgroundColor: COLORS.surface,
     paddingVertical: SPACING.xxxl,
@@ -744,13 +628,15 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: COLORS.navy,
     marginTop: 2,
+    textAlign: 'center',
   },
   sectionSubtitleCenter: {
     fontSize: 14,
     color: COLORS.secondaryText,
     marginTop: 4,
     textAlign: 'center',
-    maxWidth: 480,
+    maxWidth: 520,
+    lineHeight: 20,
   },
   benefitsGrid: {
     flexDirection: 'row',
@@ -790,7 +676,6 @@ const styles = StyleSheet.create({
     color: COLORS.secondaryText,
     lineHeight: 18,
   },
-  // How it works steps
   stepsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -800,7 +685,7 @@ const styles = StyleSheet.create({
   stepCard: {
     flex: 1,
     minWidth: 220,
-    maxWidth: 280,
+    maxWidth: 260,
     padding: SPACING.lg,
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.md,
@@ -824,7 +709,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   stepCardTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
     color: COLORS.navy,
     marginBottom: 4,
@@ -833,12 +718,68 @@ const styles = StyleSheet.create({
   stepCardDesc: {
     fontSize: 12,
     color: COLORS.secondaryText,
-    lineHeight: 18,
     textAlign: 'center',
+    lineHeight: 18,
   },
-  // Footer
+  // Reviews Section
+  reviewsSection: {
+    backgroundColor: COLORS.surfaceSubtle,
+    paddingVertical: SPACING.xxxl,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: COLORS.border,
+  },
+  reviewsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.md,
+    justifyContent: 'center',
+  },
+  reviewCard: {
+    flex: 1,
+    minWidth: 280,
+    maxWidth: 360,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
+    shadowColor: COLORS.shadowColor,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    justifyContent: 'space-between',
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: 3,
+    marginBottom: SPACING.sm,
+  },
+  reviewText: {
+    fontSize: 13,
+    color: COLORS.primaryText,
+    lineHeight: 20,
+    fontStyle: 'italic',
+    marginBottom: SPACING.md,
+  },
+  reviewerMeta: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+    paddingTop: SPACING.sm,
+  },
+  reviewerName: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.navy,
+  },
+  reviewerCollege: {
+    fontSize: 11,
+    color: COLORS.secondaryText,
+    marginTop: 2,
+  },
   footerSection: {
-    backgroundColor: '#0A192F',
+    backgroundColor: '#0F172A',
     paddingVertical: SPACING.xxxl,
     borderTopWidth: 1,
     borderTopColor: '#1E293B',
@@ -852,35 +793,34 @@ const styles = StyleSheet.create({
   footerColsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.xxl,
     justifyContent: 'space-between',
+    gap: SPACING.xl,
   },
   footerBrandCol: {
-    flex: 1.5,
+    flex: 1.4,
     minWidth: 260,
   },
   footerLogoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    alignItems: 'baseline',
+    gap: 6,
     marginBottom: SPACING.md,
   },
   footerBrandName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '900',
     color: COLORS.white,
     letterSpacing: 0.5,
   },
   footerBrandAccent: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '900',
     color: COLORS.darkOrange,
-    letterSpacing: 0.5,
   },
   footerBrandDesc: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#94A3B8',
-    lineHeight: 20,
+    lineHeight: 18,
     marginBottom: SPACING.md,
   },
   footerCopyright: {
@@ -889,19 +829,18 @@ const styles = StyleSheet.create({
   },
   footerLinksCol: {
     flex: 1,
-    minWidth: 150,
+    minWidth: 180,
+    gap: 8,
   },
   footerColHeading: {
     fontSize: 13,
     fontWeight: '800',
     color: COLORS.white,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: SPACING.md,
+    marginBottom: 6,
   },
   footerLink: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#94A3B8',
-    marginBottom: 8,
+    marginBottom: 4,
   },
 });

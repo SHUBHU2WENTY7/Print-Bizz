@@ -6,12 +6,7 @@ import {
   CheckCircle2, 
   Clock, 
   CircleDot, 
-  MapPin, 
-  Truck, 
-  Printer, 
-  Sparkles, 
-  Package, 
-  ShieldCheck 
+  MapPin 
 } from 'lucide-react-native';
 
 interface OrderTimelineProps {

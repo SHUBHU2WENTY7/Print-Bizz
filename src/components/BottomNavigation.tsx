@@ -6,12 +6,11 @@ import {
   Home, 
   Compass, 
   PackageCheck, 
-  Heart, 
   User 
 } from 'lucide-react-native';
 
 export const BottomNavigation: React.FC = () => {
-  const { currentScreen, navigateTo, orders, wishlist } = useAppStore();
+  const { currentScreen, navigateTo, orders } = useAppStore();
 
   const activeOrdersCount = orders.filter(
     (o) => o.orderStatus !== 'Delivered' && o.orderStatus !== 'Cancelled'
@@ -44,19 +43,6 @@ export const BottomNavigation: React.FC = () => {
           strokeWidth={active ? 2.5 : 2} 
         />
       ),
-    },
-    {
-      name: 'Wishlist',
-      screen: 'wishlist',
-      icon: (active) => (
-        <Heart 
-          size={22} 
-          color={active ? COLORS.darkOrange : COLORS.secondaryText} 
-          strokeWidth={active ? 2.5 : 2}
-          fill={active ? COLORS.darkOrange : 'transparent'} 
-        />
-      ),
-      badgeCount: wishlist.length > 0 ? wishlist.length : undefined,
     },
     {
       name: 'My Orders',
@@ -134,7 +120,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xs + 2,
     paddingHorizontal: SPACING.md,
     width: '100%',
-    maxWidth: 580,
+    maxWidth: 500,
     justifyContent: 'space-around',
     alignItems: 'center',
     borderWidth: 1,

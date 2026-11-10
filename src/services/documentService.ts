@@ -8,7 +8,7 @@ if (typeof window !== 'undefined') {
     if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
       pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
     }
-  } catch (e) {
+  } catch {
     // fallback or ignore if already set
   }
 }
@@ -76,7 +76,7 @@ export async function processUploadedFile(file: File): Promise<UploadedDocument>
               renderedPages.push(canvas.toDataURL('image/jpeg', 0.85));
             }
           }
-        } catch (pageErr) {
+        } catch {
           extractedText.push(`Page ${i}`);
         }
       }
@@ -99,7 +99,7 @@ export async function processUploadedFile(file: File): Promise<UploadedDocument>
         extractedText: extractedText.length > 0 ? extractedText : undefined,
         validationMessage: `Verified genuine PDF • ${pageCount} pages detected • Preflight check passed`,
       };
-    } catch (pdfErr: any) {
+    } catch {
       // In case worker failed or strict mode, create real document with fallback page extraction
       return {
         id: `doc_${Date.now()}`,
@@ -148,7 +148,7 @@ export async function processUploadedFile(file: File): Promise<UploadedDocument>
         extractedText,
         validationMessage: `Verified DOCX document • ${words.length} words converted into ${pageCount} formatted pages`,
       };
-    } catch (docxErr: any) {
+    } catch {
       throw new Error('Failed to parse Word (.docx) document. Please ensure the file is not password-protected.');
     }
   }

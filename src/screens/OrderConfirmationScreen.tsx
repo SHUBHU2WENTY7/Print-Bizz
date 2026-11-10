@@ -10,11 +10,8 @@ import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
 import { 
   CheckCircle2, 
-  Package, 
   Truck, 
-  ArrowRight, 
-  Download, 
-  FileText 
+  ArrowRight 
 } from 'lucide-react-native';
 
 export const OrderConfirmationScreen: React.FC = () => {

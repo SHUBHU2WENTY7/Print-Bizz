@@ -5,12 +5,11 @@ import {
   StyleSheet, 
   Modal, 
   TouchableOpacity, 
-  ScrollView, 
-  Platform 
+  ScrollView
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
-import { X, RotateCcw, Check, SlidersHorizontal, IndianRupee } from 'lucide-react-native';
+import { X, RotateCcw, Check, SlidersHorizontal } from 'lucide-react-native';
 
 export const FilterModal: React.FC = () => {
   const { 
@@ -31,15 +30,14 @@ export const FilterModal: React.FC = () => {
   const [localSort, setLocalSort] = useState(filterState.sortBy);
   const [localMaxPrice, setLocalMaxPrice] = useState(filterState.maxPrice);
 
-  const categories = ['All', 'Customized', 'College Standard', 'Project Executive'];
+  const categories = ['All', 'Black Books'];
   const gsmOptions = ['75 GSM Standard', '80 GSM Bond', '100 GSM Executive', '120 GSM Royal'];
   const printTypeOptions = ['Black & White', 'Mixed (B&W + Colour)', 'Full Colour'];
   const sideOptions = ['Double-Sided (Recommended)', 'Single-Sided'];
   const bindingOptions = [
     'Golden Embossed Hardcover (Standard)',
     'Silver Foil Embossed Hardcover',
-    'Premium Leatherette Rexine',
-    'Executive Matte Obsidian'
+    'Premium Leatherette Rexine'
   ];
   const sortOptions: { id: typeof filterState.sortBy; label: string }[] = [
     { id: 'popular', label: 'Most Popular' },
@@ -198,6 +196,27 @@ export const FilterModal: React.FC = () => {
                     >
                       <Text style={[styles.pillText, isSelected && styles.pillTextSelected]}>
                         {type}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Print Sides Selection */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Print Sides</Text>
+              <View style={styles.pillContainer}>
+                {sideOptions.map((side) => {
+                  const isSelected = localSides === side;
+                  return (
+                    <TouchableOpacity
+                      key={side}
+                      style={[styles.pill, isSelected && styles.pillSelected]}
+                      onPress={() => setLocalSides(side as any)}
+                    >
+                      <Text style={[styles.pillText, isSelected && styles.pillTextSelected]}>
+                        {side}
                       </Text>
                     </TouchableOpacity>
                   );

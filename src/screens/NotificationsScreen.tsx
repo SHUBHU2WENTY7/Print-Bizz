@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
-import { Bell, CheckCheck, Trash2, ArrowRight, Tag, Truck, Info } from 'lucide-react-native';
+import { Bell, CheckCheck, Trash2, Tag, Truck, Info } from 'lucide-react-native';
 
 export const NotificationsScreen: React.FC = () => {
   const { 

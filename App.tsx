@@ -71,7 +71,7 @@ const screenTitles: Record<ScreenName, string> = {
 };
 
 // Bottom tabs navigation is shown on these primary screens
-const tabScreens: ScreenName[] = ['home', 'explore', 'wishlist', 'my_orders', 'profile', 'search'];
+const tabScreens: ScreenName[] = ['home', 'explore', 'my_orders', 'profile', 'search'];
 
 export default function App() {
   const currentScreen = useAppStore((state) => state.currentScreen);

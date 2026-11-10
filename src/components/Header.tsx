@@ -56,22 +56,25 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const handleCategoryNav = (cat: string) => {
-    if (cat === 'All Products') {
-      setFilterState({ category: 'All' });
-    } else {
-      setFilterState({ category: cat });
+    if (cat === '3D Book Preview') {
+      navigateTo('book_preview');
+      return;
     }
+    if (cat === 'Customizer') {
+      navigateTo('customize');
+      return;
+    }
+    setFilterState({ category: 'All' });
     navigateTo('explore');
   };
 
   const navCategories = [
-    'All Products',
-    'Black Books',
-    'Project Books',
-    'Thesis Binding',
-    'Spiral Binding',
-    'Printing Services',
-    'Stationery',
+    'All Black Books',
+    'University Edition',
+    'Executive Deluxe',
+    'Doctoral Thesis',
+    '3D Book Preview',
+    'Customizer',
   ];
 
   return (

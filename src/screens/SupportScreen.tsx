@@ -8,18 +8,14 @@ import {
   TextInput 
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
-import { useAppStore } from '../store/useAppStore';
 import { 
-  HelpCircle, 
   Phone, 
   Mail, 
   MessageSquare, 
   ChevronDown, 
   ChevronUp, 
   Send, 
-  CheckCircle2, 
-  FileQuestion,
-  ShieldCheck
+  CheckCircle2 
 } from 'lucide-react-native';
 
 export const SupportScreen: React.FC = () => {

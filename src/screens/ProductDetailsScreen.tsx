@@ -5,8 +5,7 @@ import {
   StyleSheet, 
   ScrollView, 
   Image, 
-  TouchableOpacity, 
-  Platform 
+  TouchableOpacity 
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
@@ -15,15 +14,10 @@ import {
   Heart, 
   Share2, 
   Truck, 
-  ShieldCheck, 
   Check, 
   Sliders, 
-  Layers, 
   ArrowRight,
-  BookOpen,
-  Sparkles,
-  HelpCircle,
-  FileCheck
+  BookOpen
 } from 'lucide-react-native';
 
 export const ProductDetailsScreen: React.FC = () => {
@@ -31,10 +25,7 @@ export const ProductDetailsScreen: React.FC = () => {
     selectedProduct, 
     wishlist, 
     toggleWishlist, 
-    navigateTo, 
-    addToCart,
-    customization,
-    updateCustomization 
+    navigateTo 
   } = useAppStore();
 
   const [activeGalleryIdx, setActiveGalleryIdx] = useState(0);
@@ -202,27 +193,19 @@ export const ProductDetailsScreen: React.FC = () => {
                 onPress={() => navigateTo('customize')}
                 activeOpacity={0.85}
               >
-                <Sliders size={16} color={COLORS.white} />
-                <Text style={styles.customizePrimaryBtnText}>Customize Your Book</Text>
-                <ArrowRight size={16} color={COLORS.white} />
+                <Sliders size={18} color={COLORS.white} />
+                <Text style={styles.customizePrimaryBtnText}>Configure & Build Your Black Book</Text>
+                <ArrowRight size={18} color={COLORS.white} />
               </TouchableOpacity>
 
               <View style={styles.secondaryBtnRow}>
                 <TouchableOpacity 
-                  style={styles.addToCartBtn}
-                  onPress={addToCart}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.addToCartBtnText}>Add Standard Copy to Cart</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
                   style={styles.previewBtn}
-                  onPress={() => navigateTo('book_preview')}
+                  onPress={() => navigateTo('customize')}
                   activeOpacity={0.85}
                 >
                   <BookOpen size={16} color={COLORS.navy} />
-                  <Text style={styles.previewBtnText}>Virtual Preview</Text>
+                  <Text style={styles.previewBtnText}>Upload Document & Preview in 3D</Text>
                 </TouchableOpacity>
               </View>
             </View>

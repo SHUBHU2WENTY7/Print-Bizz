@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
-import { Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react-native';
+import { Plus, Minus, ShoppingBag } from 'lucide-react-native';
 
 interface StickyActionBarProps {
   onActionPress?: () => void;

@@ -10,13 +10,9 @@ import {
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
 import { 
-  MapPin, 
   Plus, 
   Trash2, 
-  Check, 
   ArrowLeft, 
-  Building, 
-  Home, 
   Star 
 } from 'lucide-react-native';
 
@@ -123,7 +119,11 @@ export const SavedAddressesScreen: React.FC = () => {
                 <Text style={styles.inputLabel}>Area / Locality</Text>
                 <TextInput style={styles.input} value={area} onChangeText={setArea} placeholder="Matunga East" />
               </View>
-              <View style={[styles.inputGroup, { width: 120 }]}>
+              <View style={[styles.inputGroup, { flex: 1 }]}>
+                <Text style={styles.inputLabel}>City</Text>
+                <TextInput style={styles.input} value={city} onChangeText={setCity} placeholder="Mumbai" />
+              </View>
+              <View style={[styles.inputGroup, { width: 110 }]}>
                 <Text style={styles.inputLabel}>PIN Code</Text>
                 <TextInput style={styles.input} value={pincode} onChangeText={setPincode} keyboardType="numeric" placeholder="400019" />
               </View>

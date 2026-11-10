@@ -4,20 +4,14 @@ import {
   Text, 
   StyleSheet, 
   ScrollView, 
-  TouchableOpacity, 
-  Image 
+  TouchableOpacity 
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
 import { 
   Package, 
   ChevronRight, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
-  ShoppingBag,
-  ArrowRight,
-  Eye
+  ArrowRight
 } from 'lucide-react-native';
 
 export const MyOrdersScreen: React.FC = () => {

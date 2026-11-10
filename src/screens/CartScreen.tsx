@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
+import { EditBlackBookModal } from '../components/EditBlackBookModal';
+import { CartItem } from '../types';
 import { 
   Trash2, 
   Plus, 
@@ -17,10 +19,10 @@ import {
   ShoppingBag, 
   ArrowRight, 
   Tag, 
-  Truck, 
   ShieldCheck, 
   Edit3,
-  FileText
+  FileText,
+  User
 } from 'lucide-react-native';
 
 export const CartScreen: React.FC = () => {
@@ -28,7 +30,7 @@ export const CartScreen: React.FC = () => {
     cart, 
     updateCartQuantity, 
     removeFromCart, 
-    editCartItem, 
+    updateCartItemCustomization,
     navigateTo,
     clearCart 
   } = useAppStore();
@@ -36,6 +38,7 @@ export const CartScreen: React.FC = () => {
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
   const [promoDiscount, setPromoDiscount] = useState(0);
+  const [editingCartItem, setEditingCartItem] = useState<CartItem | null>(null);
 
   // Compute Cart Aggregates
   let subtotal = 0;
@@ -112,6 +115,23 @@ export const CartScreen: React.FC = () => {
 
                     {/* Customization Specs Summary Badge */}
                     <View style={styles.specsSummaryBox}>
+                      {/* Interactive Student Name Tag */}
+                      <TouchableOpacity 
+                        style={styles.studentNameTag}
+                        onPress={() => setEditingCartItem(item)}
+                        activeOpacity={0.8}
+                      >
+                        <User size={12} color={COLORS.navy} />
+                        <Text style={styles.studentNameTagText} numberOfLines={1}>
+                          {item.customization.cover.studentName}
+                        </Text>
+                        <Text style={styles.editPencilText}>Edit Name ✏️</Text>
+                      </TouchableOpacity>
+
+                      <Text style={styles.projectTitleCartText} numberOfLines={1}>
+                        &ldquo;{item.customization.cover.projectTitle}&rdquo;
+                      </Text>
+
                       <Text style={styles.specLine}>
                         {item.customization.paperSize} • {item.customization.paperGSM} • {item.customization.printType}
                       </Text>
@@ -146,10 +166,11 @@ export const CartScreen: React.FC = () => {
 
                       <TouchableOpacity 
                         style={styles.editSpecsBtn}
-                        onPress={() => editCartItem(item.id)}
+                        onPress={() => setEditingCartItem(item)}
+                        activeOpacity={0.8}
                       >
                         <Edit3 size={13} color={COLORS.navy} />
-                        <Text style={styles.editSpecsBtnText}>Edit Specs</Text>
+                        <Text style={styles.editSpecsBtnText}>Edit Details</Text>
                       </TouchableOpacity>
 
                       <View style={styles.itemTotalPrice}>
@@ -247,6 +268,14 @@ export const CartScreen: React.FC = () => {
           </View>
         </View>
       </View>
+
+      {/* Edit Specifications & Name Window Modal */}
+      <EditBlackBookModal
+        visible={Boolean(editingCartItem)}
+        item={editingCartItem}
+        onClose={() => setEditingCartItem(null)}
+        onSave={updateCartItemCustomization}
+      />
     </ScrollView>
   );
 };
@@ -557,5 +586,35 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 14,
     fontWeight: '700',
+  },
+  studentNameTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.xs,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    alignSelf: 'flex-start',
+    marginBottom: 4,
+  },
+  studentNameTagText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: COLORS.navy,
+  },
+  editPencilText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.darkOrange,
+    marginLeft: 4,
+  },
+  projectTitleCartText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.navy,
+    marginBottom: 3,
   },
 });

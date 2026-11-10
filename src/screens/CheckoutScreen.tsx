@@ -10,15 +10,15 @@ import {
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
+import { EditBlackBookModal } from '../components/EditBlackBookModal';
+import { CartItem } from '../types';
 import { 
-  MapPin, 
-  Truck, 
-  CreditCard, 
   ShieldCheck, 
   Plus, 
-  Check, 
   ArrowRight,
-  Clock
+  Edit3,
+  User,
+  BookOpen
 } from 'lucide-react-native';
 
 export const CheckoutScreen: React.FC = () => {
@@ -29,7 +29,7 @@ export const CheckoutScreen: React.FC = () => {
     addAddress,
     cart, 
     placeOrder, 
-    navigateTo 
+    updateCartItemCustomization
   } = useAppStore();
 
   const [deliverySpeed, setDeliverySpeed] = useState<'standard' | 'express'>('standard');
@@ -37,6 +37,7 @@ export const CheckoutScreen: React.FC = () => {
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
+  const [editingCheckoutItem, setEditingCheckoutItem] = useState<CartItem | null>(null);
 
   // New Address Form State
   const [newLabel, setNewLabel] = useState('College');
@@ -80,7 +81,7 @@ export const CheckoutScreen: React.FC = () => {
     setIsPlacingOrder(true);
     try {
       await placeOrder(paymentMethod, deliveryInstructions);
-    } catch (err) {
+    } catch {
       alert('Failed to place order. Please try again.');
     } finally {
       setIsPlacingOrder(false);
@@ -95,6 +96,61 @@ export const CheckoutScreen: React.FC = () => {
         <View style={styles.checkoutLayout}>
           {/* LEFT: Checkout Steps */}
           <View style={styles.stepsCol}>
+            {/* ORDER ITEMS REVIEW & EDIT CARD */}
+            <View style={styles.checkoutCard}>
+              <View style={styles.cardHeaderRow}>
+                <View style={[styles.stepNumBadge, { backgroundColor: COLORS.darkOrange }]}>
+                  <BookOpen size={14} color={COLORS.white} />
+                </View>
+                <Text style={styles.cardHeaderTitle}>Items in Your Order ({cart.length})</Text>
+                <Text style={styles.editHintBadge}>Tap item to edit name or details</Text>
+              </View>
+
+              <View style={styles.orderItemsList}>
+                {cart.map((item) => (
+                  <View key={item.id} style={styles.checkoutItemRow}>
+                    <View style={styles.itemMetaLeft}>
+                      <Text style={styles.checkoutItemName}>{item.product.name}</Text>
+                      
+                      {/* Candidate Name Badge (Interactive) */}
+                      <TouchableOpacity 
+                        style={styles.candidateNameBadge}
+                        onPress={() => setEditingCheckoutItem(item)}
+                        activeOpacity={0.8}
+                      >
+                        <User size={12} color={COLORS.navy} />
+                        <Text style={styles.candidateNameText}>
+                          Student: {item.customization.cover.studentName}
+                        </Text>
+                        <Text style={styles.inlineEditBtnText}>Edit Name ✏️</Text>
+                      </TouchableOpacity>
+
+                      <Text style={styles.checkoutItemSub} numberOfLines={1}>
+                        &ldquo;{item.customization.cover.projectTitle}&rdquo; • {item.customization.paperGSM} • {item.customization.cover.embossingFoil}
+                      </Text>
+                      <Text style={styles.checkoutItemCollege} numberOfLines={1}>
+                        {item.customization.cover.collegeName}
+                      </Text>
+                    </View>
+
+                    <View style={styles.itemMetaRight}>
+                      <TouchableOpacity 
+                        style={styles.quickEditBtn}
+                        onPress={() => setEditingCheckoutItem(item)}
+                        activeOpacity={0.8}
+                      >
+                        <Edit3 size={12} color={COLORS.navy} />
+                        <Text style={styles.quickEditBtnText}>Edit</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.checkoutItemQtyPrice}>
+                        {item.customization.copies} {item.customization.copies === 1 ? 'copy' : 'copies'} • ₹{item.pricing.subtotal}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+
             {/* STEP 1: DELIVERY ADDRESS */}
             <View style={styles.checkoutCard}>
               <View style={styles.cardHeaderRow}>
@@ -113,6 +169,31 @@ export const CheckoutScreen: React.FC = () => {
               {showAddAddressForm && (
                 <View style={styles.newAddressFormBox}>
                   <Text style={styles.formSectionTitle}>Add New Delivery Address</Text>
+                  
+                  {/* Address Type Selector */}
+                  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+                    {['College', 'Hostel', 'Home'].map((tag) => (
+                      <TouchableOpacity
+                        key={tag}
+                        style={{
+                          paddingHorizontal: 12,
+                          paddingVertical: 5,
+                          borderRadius: RADIUS.full,
+                          borderWidth: 1,
+                          borderColor: newLabel === tag ? COLORS.navy : COLORS.border,
+                          backgroundColor: newLabel === tag ? COLORS.navy : COLORS.white,
+                        }}
+                        onPress={() => setNewLabel(tag)}
+                      >
+                        <Text style={{
+                          fontSize: 11,
+                          fontWeight: '700',
+                          color: newLabel === tag ? COLORS.white : COLORS.secondaryText,
+                        }}>{tag}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
                   <View style={styles.formRow}>
                     <TextInput 
                       style={[styles.formInput, { flex: 1 }]} 
@@ -142,7 +223,13 @@ export const CheckoutScreen: React.FC = () => {
                       onChangeText={setNewArea} 
                     />
                     <TextInput 
-                      style={[styles.formInput, { width: 120 }]} 
+                      style={[styles.formInput, { flex: 1 }]} 
+                      placeholder="City" 
+                      value={newCity} 
+                      onChangeText={setNewCity} 
+                    />
+                    <TextInput 
+                      style={[styles.formInput, { width: 100 }]} 
                       placeholder="PIN Code" 
                       value={newPincode} 
                       onChangeText={setNewPincode} 
@@ -320,6 +407,14 @@ export const CheckoutScreen: React.FC = () => {
           </View>
         </View>
       </View>
+
+      {/* Edit Black Book Details Modal on Checkout */}
+      <EditBlackBookModal
+        visible={Boolean(editingCheckoutItem)}
+        item={editingCheckoutItem}
+        onClose={() => setEditingCheckoutItem(null)}
+        onSave={updateCartItemCustomization}
+      />
     </ScrollView>
   );
 };
@@ -655,5 +750,92 @@ const styles = StyleSheet.create({
   securitySealText: {
     fontSize: 11,
     color: COLORS.secondaryText,
+  },
+  // Order Items Review on Checkout
+  editHintBadge: {
+    fontSize: 10,
+    color: COLORS.secondaryText,
+    fontStyle: 'italic',
+  },
+  orderItemsList: {
+    gap: SPACING.sm,
+  },
+  checkoutItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.surfaceSubtle,
+    padding: SPACING.md,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    gap: SPACING.md,
+  },
+  itemMetaLeft: {
+    flex: 1,
+  },
+  checkoutItemName: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.navy,
+  },
+  candidateNameBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.xs,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    alignSelf: 'flex-start',
+    marginVertical: 4,
+  },
+  candidateNameText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: COLORS.navy,
+  },
+  inlineEditBtnText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.darkOrange,
+    marginLeft: 4,
+  },
+  checkoutItemSub: {
+    fontSize: 11,
+    color: COLORS.secondaryText,
+    marginTop: 2,
+  },
+  checkoutItemCollege: {
+    fontSize: 10,
+    color: COLORS.mutedText,
+    marginTop: 1,
+  },
+  itemMetaRight: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  quickEditBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADIUS.xs,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  quickEditBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.navy,
+  },
+  checkoutItemQtyPrice: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.navy,
   },
 });

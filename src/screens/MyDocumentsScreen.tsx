@@ -5,7 +5,8 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
-  Platform 
+  Platform,
+  ActivityIndicator 
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
@@ -82,13 +83,20 @@ export const MyDocumentsScreen: React.FC = () => {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.uploadBtn}
+            style={[styles.uploadBtn, isUploading && { opacity: 0.7 }]}
+            disabled={isUploading}
             onPress={() => {
               if (Platform.OS === 'web') fileInputRef.current?.click();
             }}
           >
-            <Plus size={15} color={COLORS.white} />
-            <Text style={styles.uploadBtnText}>Upload Document</Text>
+            {isUploading ? (
+              <ActivityIndicator size="small" color={COLORS.white} />
+            ) : (
+              <Plus size={15} color={COLORS.white} />
+            )}
+            <Text style={styles.uploadBtnText}>
+              {isUploading ? 'Uploading...' : 'Upload Document'}
+            </Text>
           </TouchableOpacity>
         </View>
 

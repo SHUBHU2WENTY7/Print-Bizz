@@ -22,17 +22,14 @@ import {
   Trash2, 
   Eye, 
   RotateCcw, 
-  Sparkles, 
-  Layers, 
-  Sliders, 
   Plus, 
   Minus, 
   ChevronRight, 
-  ChevronLeft,
-  ArrowRight,
-  ShieldCheck,
-  AlertCircle,
-  HelpCircle
+  ChevronLeft, 
+  ArrowRight, 
+  ShieldCheck, 
+  AlertCircle, 
+  Lock
 } from 'lucide-react-native';
 
 export const CustomizeScreen: React.FC = () => {
@@ -55,6 +52,33 @@ export const CustomizeScreen: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Step fulfillment validation
+  const isStep1Fulfilled = Boolean(selectedProduct && selectedProduct.id);
+  const isStep2Fulfilled = Boolean(uploadedDocument);
+  const isStep3Fulfilled = Boolean(customization.paperSize && customization.paperGSM && customization.printType);
+  const isStep4Fulfilled = Boolean(
+    customization.cover.studentName?.trim() && 
+    customization.cover.collegeName?.trim() && 
+    customization.cover.projectTitle?.trim()
+  );
+  const isStep5Fulfilled = Boolean(customization.copies >= 1);
+
+  const isAllStepsFulfilled = isStep1Fulfilled && isStep2Fulfilled && isStep3Fulfilled && isStep4Fulfilled && isStep5Fulfilled;
+
+  const isStepFulfilled = (num: number) => {
+    if (num === 1) return isStep1Fulfilled;
+    if (num === 2) return isStep2Fulfilled;
+    if (num === 3) return isStep3Fulfilled;
+    if (num === 4) return isStep4Fulfilled;
+    if (num === 5) return isStep5Fulfilled;
+    if (num === 6) return isAllStepsFulfilled;
+    return false;
+  };
+
+  const pendingRequirements: { step: number; label: string }[] = [];
+  if (!isStep2Fulfilled) pendingRequirements.push({ step: 2, label: 'Upload your genuine project document (PDF/Word)' });
+  if (!isStep4Fulfilled) pendingRequirements.push({ step: 4, label: 'Complete cover details (Student Name, College & Title)' });
 
   const steps = [
     { num: 1, title: 'Choose Product', subtitle: 'Select academic style' },
@@ -117,7 +141,7 @@ export const CustomizeScreen: React.FC = () => {
       <View style={styles.stepperContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stepperScroll}>
           {steps.map((st) => {
-            const isCompleted = currentStep > st.num;
+            const isCompleted = isStepFulfilled(st.num);
             const isCurrent = currentStep === st.num;
             return (
               <TouchableOpacity
@@ -264,7 +288,25 @@ export const CustomizeScreen: React.FC = () => {
                     </View>
                   </View>
                 ) : (
-                  <View style={styles.dropZone}>
+                  <View 
+                    style={[
+                      styles.dropZone,
+                      isDragOver && { borderColor: COLORS.darkOrange, backgroundColor: 'rgba(234, 88, 12, 0.05)' }
+                    ]}
+                    {...({
+                      onDragOver: (e: any) => {
+                        e.preventDefault();
+                        setIsDragOver(true);
+                      },
+                      onDragLeave: () => setIsDragOver(false),
+                      onDrop: (e: any) => {
+                        e.preventDefault();
+                        setIsDragOver(false);
+                        const dropped = e.dataTransfer?.files?.[0];
+                        if (dropped) handleFileSelected(dropped);
+                      }
+                    } as any)}
+                  >
                     {isUploading ? (
                       <View style={styles.uploadingState}>
                         <ActivityIndicator size="large" color={COLORS.darkOrange} />
@@ -669,13 +711,58 @@ export const CustomizeScreen: React.FC = () => {
                   </View>
                 </View>
 
+                {/* Requirements Fulfillment Warning Card */}
+                {!isAllStepsFulfilled && (
+                  <View style={styles.requirementsLockBox}>
+                    <View style={styles.requirementsLockHeader}>
+                      <Lock size={16} color={COLORS.darkOrange} />
+                      <Text style={styles.requirementsLockTitle}>
+                        Steps Required Before Ordering & Previewing
+                      </Text>
+                    </View>
+                    <Text style={styles.requirementsLockSub}>
+                      All university guidelines require complete project metadata and a verified document file:
+                    </Text>
+                    <View style={styles.requirementsList}>
+                      {pendingRequirements.map((req) => (
+                        <TouchableOpacity
+                          key={req.step}
+                          style={styles.pendingReqItem}
+                          onPress={() => setCurrentStep(req.step)}
+                          activeOpacity={0.8}
+                        >
+                          <AlertCircle size={14} color={COLORS.darkOrange} />
+                          <Text style={styles.pendingReqText}>{req.label}</Text>
+                          <Text style={styles.pendingReqJump}>Go to Step {req.step} ➔</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
                 {/* Virtual Book Preview CTA Button */}
                 <TouchableOpacity 
-                  style={styles.openBookPreviewBtn}
-                  onPress={() => navigateTo('book_preview')}
+                  style={[
+                    styles.openBookPreviewBtn,
+                    !isAllStepsFulfilled && styles.buttonDisabledLocked
+                  ]}
+                  onPress={isAllStepsFulfilled ? () => navigateTo('book_preview') : undefined}
+                  disabled={!isAllStepsFulfilled}
+                  activeOpacity={isAllStepsFulfilled ? 0.85 : 1}
                 >
-                  <Eye size={18} color={COLORS.white} />
-                  <Text style={styles.openBookPreviewBtnText}>Inspect Virtual 3D Black Book</Text>
+                  {isAllStepsFulfilled ? (
+                    <>
+                      <Eye size={18} color={COLORS.white} />
+                      <Text style={styles.openBookPreviewBtnText}>Inspect Virtual 3D Black Book</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={16} color="#94A3B8" />
+                      <Text style={styles.buttonDisabledText}>
+                        Live 3D Preview (Complete all steps to unlock)
+                      </Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               </View>
             )}
@@ -702,11 +789,27 @@ export const CustomizeScreen: React.FC = () => {
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity 
-                  style={styles.addToCartFinalBtn}
-                  onPress={addToCart}
+                  style={[
+                    styles.addToCartFinalBtn,
+                    !isAllStepsFulfilled && styles.buttonDisabledLocked
+                  ]}
+                  onPress={isAllStepsFulfilled ? addToCart : undefined}
+                  disabled={!isAllStepsFulfilled}
+                  activeOpacity={isAllStepsFulfilled ? 0.85 : 1}
                 >
-                  <Text style={styles.addToCartFinalBtnText}>Add to Cart • ₹{currentPrice.total}</Text>
-                  <ArrowRight size={16} color={COLORS.white} />
+                  {isAllStepsFulfilled ? (
+                    <>
+                      <Text style={styles.addToCartFinalBtnText}>Add to Cart • ₹{currentPrice.total}</Text>
+                      <ArrowRight size={16} color={COLORS.white} />
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={16} color="#94A3B8" />
+                      <Text style={styles.buttonDisabledText}>
+                        Add to Cart (Complete all steps)
+                      </Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               )}
             </View>
@@ -778,21 +881,54 @@ export const CustomizeScreen: React.FC = () => {
                 <Text style={styles.totalAmount}>₹{currentPrice.total}</Text>
               </View>
 
+              {!isAllStepsFulfilled && (
+                <View style={styles.sidebarLockNotice}>
+                  <Lock size={13} color={COLORS.darkOrange} />
+                  <Text style={styles.sidebarLockNoticeText}>
+                    {!isStep2Fulfilled ? 'Upload document required' : 'Cover details required'}
+                  </Text>
+                </View>
+              )}
+
               <TouchableOpacity 
-                style={styles.sidebarAddToCartBtn}
-                onPress={addToCart}
-                activeOpacity={0.85}
+                style={[
+                  styles.sidebarAddToCartBtn,
+                  !isAllStepsFulfilled && styles.buttonDisabledLocked
+                ]}
+                onPress={isAllStepsFulfilled ? addToCart : undefined}
+                disabled={!isAllStepsFulfilled}
+                activeOpacity={isAllStepsFulfilled ? 0.85 : 1}
               >
-                <Text style={styles.sidebarAddToCartBtnText}>Add to Cart</Text>
+                {isAllStepsFulfilled ? (
+                  <Text style={styles.sidebarAddToCartBtnText}>Add to Cart</Text>
+                ) : (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Lock size={14} color="#94A3B8" />
+                    <Text style={styles.buttonDisabledText}>Add to Cart (Locked)</Text>
+                  </View>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity 
-                style={styles.sidebarPreviewBtn}
-                onPress={() => navigateTo('book_preview')}
-                activeOpacity={0.85}
+                style={[
+                  styles.sidebarPreviewBtn,
+                  !isAllStepsFulfilled && styles.buttonDisabledLocked
+                ]}
+                onPress={isAllStepsFulfilled ? () => navigateTo('book_preview') : undefined}
+                disabled={!isAllStepsFulfilled}
+                activeOpacity={isAllStepsFulfilled ? 0.85 : 1}
               >
-                <Eye size={15} color={COLORS.navy} />
-                <Text style={styles.sidebarPreviewBtnText}>Virtual Book Preview</Text>
+                {isAllStepsFulfilled ? (
+                  <>
+                    <Eye size={15} color={COLORS.navy} />
+                    <Text style={styles.sidebarPreviewBtnText}>Virtual Book Preview</Text>
+                  </>
+                ) : (
+                  <>
+                    <Lock size={14} color="#94A3B8" />
+                    <Text style={styles.buttonDisabledText}>Live Preview (Locked)</Text>
+                  </>
+                )}
               </TouchableOpacity>
 
               <View style={styles.deliveryAssurance}>
@@ -1568,5 +1704,85 @@ const styles = StyleSheet.create({
     color: COLORS.secondaryText,
     textAlign: 'center',
     lineHeight: 16,
+  },
+  // Requirements Lock & Incomplete State Styles
+  requirementsLockBox: {
+    backgroundColor: '#FFF7ED',
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: '#FED7AA',
+    padding: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  requirementsLockHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  requirementsLockTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#9A3412',
+  },
+  requirementsLockSub: {
+    fontSize: 11,
+    color: '#7C2D12',
+    lineHeight: 16,
+    marginBottom: SPACING.sm,
+  },
+  requirementsList: {
+    gap: 6,
+  },
+  pendingReqItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: RADIUS.xs,
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+    gap: 6,
+  },
+  pendingReqText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.navy,
+  },
+  pendingReqJump: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.darkOrange,
+  },
+  buttonDisabledLocked: {
+    backgroundColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
+    opacity: 0.85,
+  },
+  buttonDisabledText: {
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  sidebarLockNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: RADIUS.xs,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    marginTop: SPACING.md,
+  },
+  sidebarLockNoticeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#9A3412',
+    flex: 1,
   },
 });

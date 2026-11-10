@@ -5,22 +5,17 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
-  Image, 
-  Platform 
+  Image 
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
 import { 
   CheckCircle2, 
-  Clock, 
-  Truck, 
-  Package, 
   Download, 
   ArrowLeft, 
   FileText, 
   RotateCcw,
-  Check,
-  ShieldCheck
+  Check
 } from 'lucide-react-native';
 
 export const OrderDetailsScreen: React.FC = () => {
