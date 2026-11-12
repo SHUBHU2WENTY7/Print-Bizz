@@ -5,7 +5,8 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
-  TextInput 
+  TextInput,
+  Image 
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore } from '../store/useAppStore';
@@ -151,9 +152,40 @@ export const ProfileScreen: React.FC = () => {
               {userProfile.rollNumber ? (
                 <View style={styles.infoRow}>
                   <MapPin size={14} color={COLORS.secondaryText} />
-                  <Text style={styles.infoText}>Roll No: {userProfile.rollNumber} • {userProfile.city || 'Mumbai'}, {userProfile.state || 'Maharashtra'}</Text>
+                  <Text style={styles.infoText}>Roll No: {userProfile.rollNumber} • {userProfile.city || 'Campus'}, {userProfile.state || 'India'}</Text>
                 </View>
               ) : null}
+            </View>
+          )}
+
+          {/* Real Uploaded Student ID Cards Display */}
+          {(userProfile.idCardFront || userProfile.idCardBack) && (
+            <View style={{ marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#E2E8F0' }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.navy, marginBottom: 8 }}>
+                Uploaded Student ID Cards
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                {userProfile.idCardFront ? (
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <Image 
+                      source={{ uri: userProfile.idCardFront }} 
+                      style={{ width: '100%', height: 90, borderRadius: 6, borderWidth: 1, borderColor: '#CBD5E1' }} 
+                      resizeMode="cover" 
+                    />
+                    <Text style={{ fontSize: 11, color: COLORS.secondaryText, marginTop: 4 }}>ID Front</Text>
+                  </View>
+                ) : null}
+                {userProfile.idCardBack ? (
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <Image 
+                      source={{ uri: userProfile.idCardBack }} 
+                      style={{ width: '100%', height: 90, borderRadius: 6, borderWidth: 1, borderColor: '#CBD5E1' }} 
+                      resizeMode="cover" 
+                    />
+                    <Text style={{ fontSize: 11, color: COLORS.secondaryText, marginTop: 4 }}>ID Back</Text>
+                  </View>
+                ) : null}
+              </View>
             </View>
           )}
         </View>
@@ -182,11 +214,25 @@ export const ProfileScreen: React.FC = () => {
         <TouchableOpacity 
           style={styles.logoutBtn}
           onPress={() => {
-            alert('Session active as Aarav Sharma. You can update your details anytime in the profile editor.');
+            updateUserProfile({
+              name: '',
+              email: '',
+              phone: '',
+              state: '',
+              city: '',
+              college: '',
+              collegeAddress: '',
+              university: '',
+              rollNumber: '',
+              idCardFront: null,
+              idCardBack: null,
+              isRegistered: false,
+            });
+            navigateTo('auth_onboarding');
           }}
         >
           <LogOut size={16} color={COLORS.error} />
-          <Text style={styles.logoutBtnText}>Log Out</Text>
+          <Text style={styles.logoutBtnText}>Log Out / Switch Account</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

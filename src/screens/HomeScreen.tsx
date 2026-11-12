@@ -1,241 +1,356 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   ScrollView, 
-  TouchableOpacity
+  TouchableOpacity,
+  TextInput,
+  Image 
 } from 'react-native';
-import { COLORS, SPACING, RADIUS } from '../constants/theme';
+import { COLORS, RADIUS } from '../constants/theme';
 import { BLACK_BOOK_PRODUCTS } from '../constants/products';
 import { useAppStore } from '../store/useAppStore';
-import { BlackBookCoverThumbnail } from '../components/BlackBookCoverThumbnail';
 import { 
   BookOpen, 
-  ChevronRight, 
+  ChevronDown, 
+  Search, 
+  Mic, 
+  Heart, 
+  Zap, 
+  Award, 
   Sparkles, 
-  CheckCircle, 
   ArrowRight, 
-  GraduationCap, 
-  ShieldCheck, 
-  Truck, 
-  UploadCloud, 
-  Eye, 
-  Sliders, 
-  Check 
+  SlidersHorizontal,
+  MapPin,
+  User,
+  GraduationCap,
+  Percent,
+  Flame,
+  Star,
+  FileText
 } from 'lucide-react-native';
 
 export const HomeScreen: React.FC = () => {
-  const { navigateTo, selectProduct, userProfile } = useAppStore();
+  const { 
+    navigateTo, 
+    selectProduct, 
+    userProfile, 
+    setSearchQuery,
+    wishlist,
+    toggleWishlist 
+  } = useAppStore();
+
+  const [activeCategory, setActiveCategory] = useState<'blackbooks' | 'express' | 'thesis' | 'spiral'>('blackbooks');
+  const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [localSearch, setLocalSearch] = useState('');
 
   const handleStartCustomizing = (productId?: string) => {
     selectProduct(productId || 'customized-black-book');
     navigateTo('customize');
   };
 
-  const blackBookEditions = BLACK_BOOK_PRODUCTS;
+  const handleSearchSubmit = () => {
+    if (localSearch.trim()) {
+      setSearchQuery(localSearch.trim());
+      navigateTo('explore');
+    }
+  };
+
+  const collegeDisplay = userProfile.college || (userProfile.city ? `${userProfile.city}, ${userProfile.state}` : 'Select Campus & College');
+  const addressDisplay = userProfile.collegeAddress || 'Choose your delivery campus or college address';
+
+  // Quick category services
+  const categories = [
+    { id: 'blackbooks', name: 'BLACK BOOKS', badge: 'POPULAR', icon: BookOpen },
+    { id: 'express', name: 'EXPRESS PRINT', badge: '24 HRS', icon: Zap },
+    { id: 'thesis', name: 'THESIS & PhD', badge: 'ARCHIVAL', icon: GraduationCap },
+    { id: 'spiral', name: 'SPIRAL BIND', badge: 'FROM ₹99', icon: FileText },
+  ];
+
+  // Quick deal tiles (Swiggy style row)
+  const dealTiles = [
+    { id: 'deal1', title: 'Flat ₹100 OFF', subtitle: 'On 3+ Copies', tag: 'BESTSELLER', icon: Percent, color: '#D97706' },
+    { id: 'deal2', title: 'Starts ₹99', subtitle: 'Flash Prints', tag: 'FLASH DEALS', icon: Flame, color: '#EA580C' },
+    { id: 'deal3', title: 'Free Delivery', subtitle: 'Above ₹699', tag: 'SAVE ₹49', icon: Award, color: '#2563EB' },
+    { id: 'deal4', title: 'Fast Track 24h', subtitle: 'Express Dispatch', tag: 'BOLT ⚡', icon: Zap, color: '#059669' },
+  ];
+
+  // Quick filter pills
+  const filterPills = [
+    { id: 'all', label: 'ALL PRODUCTS' },
+    { id: 'discount', label: 'MIN ₹100 OFF' },
+    { id: 'fast', label: '24-48H DISPATCH' },
+    { id: 'hardcover', label: 'RIGID HARDCOVER' },
+    { id: 'gold', label: 'GOLD FOIL' },
+    { id: 'rated', label: '★ 4.9+ RATING' },
+  ];
+
+  // Filtered products
+  const displayedProducts = BLACK_BOOK_PRODUCTS.filter((prod) => {
+    if (activeFilter === 'discount') return prod.startingPrice < 400;
+    if (activeFilter === 'fast') return prod.specifications.turnaround.includes('24');
+    if (activeFilter === 'hardcover') return prod.category === 'Black Books';
+    if (activeFilter === 'rated') return prod.rating >= 4.95;
+    return true;
+  });
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentWrap} showsVerticalScrollIndicator={false}>
-      {/* 1. STUDENT VERIFIED BADGE BAR */}
-      {userProfile.isRegistered && (
-        <View style={styles.verifiedStudentBar}>
-          <View style={styles.verifiedStudentLeft}>
-            <View style={styles.verifiedIconWrap}>
-              <GraduationCap size={16} color={COLORS.navy} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={styles.verifiedStudentName} numberOfLines={1}>{userProfile.name}</Text>
-                <View style={styles.verifiedSmallBadge}>
-                  <Check size={10} color={COLORS.success} />
-                  <Text style={styles.verifiedSmallBadgeText}>Verified</Text>
-                </View>
-              </View>
-              <Text style={styles.verifiedStudentSub} numberOfLines={1}>
-                {userProfile.college} • Roll: {userProfile.rollNumber}
+      {/* ================= 1. SWIGGY STYLE LOCATION & PROFILE HEADER ================= */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity 
+          style={styles.locationBlock} 
+          onPress={() => navigateTo('auth_onboarding')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.locationTitleRow}>
+            <MapPin size={18} color={COLORS.navy} />
+            <Text style={styles.locationTitleText} numberOfLines={1}>
+              {collegeDisplay}
+            </Text>
+            <ChevronDown size={16} color={COLORS.navy} />
+          </View>
+          <Text style={styles.locationSubText} numberOfLines={1}>
+            {addressDisplay}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.profileAvatarBtn} 
+          onPress={() => navigateTo(userProfile.isRegistered ? 'profile' : 'auth_onboarding')}
+          activeOpacity={0.8}
+        >
+          {userProfile.isRegistered ? (
+            <View style={styles.avatarCircleRegistered}>
+              <Text style={styles.avatarInitials}>
+                {userProfile.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
               </Text>
             </View>
-          </View>
+          ) : (
+            <View style={styles.avatarCircleGuest}>
+              <User size={18} color={COLORS.navy} />
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* ================= 2. CATEGORY / SERVICE CARDS (4 SQUIRCLE CARDS) ================= */}
+      <View style={styles.categoryRow}>
+        {categories.map((cat) => {
+          const IconComp = cat.icon;
+          const isActive = activeCategory === cat.id;
+          return (
+            <TouchableOpacity
+              key={cat.id}
+              style={[styles.categoryCard, isActive && styles.categoryCardActive]}
+              onPress={() => {
+                setActiveCategory(cat.id as any);
+                if (cat.id === 'blackbooks') handleStartCustomizing('customized-black-book');
+                else navigateTo('explore');
+              }}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.categoryIconWrap, isActive && styles.categoryIconWrapActive]}>
+                <IconComp size={22} color={isActive ? COLORS.white : COLORS.navy} strokeWidth={2.2} />
+              </View>
+              {cat.badge && (
+                <View style={[styles.catBadge, isActive && styles.catBadgeActive]}>
+                  <Text style={[styles.catBadgeText, isActive && styles.catBadgeTextActive]}>{cat.badge}</Text>
+                </View>
+              )}
+              <Text style={[styles.categoryLabel, isActive && styles.categoryLabelActive]}>
+                {cat.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* ================= 3. ATTRACTIVE SWIGGY STYLE SEARCH BAR ================= */}
+      <View style={styles.searchBarWrap}>
+        <View style={styles.searchBar}>
+          <Search size={18} color={COLORS.secondaryText} style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search 'Black Book', 'Golden Foil', 'Thesis'..."
+            placeholderTextColor={COLORS.mutedText}
+            value={localSearch}
+            onChangeText={setLocalSearch}
+            onSubmitEditing={handleSearchSubmit}
+            returnKeyType="search"
+          />
           <TouchableOpacity 
-            style={styles.editProfilePill}
-            onPress={() => navigateTo('profile')}
+            style={styles.micButton}
+            onPress={handleSearchSubmit}
+            activeOpacity={0.7}
           >
-            <Text style={styles.editProfilePillText}>Profile</Text>
+            <Mic size={18} color={COLORS.darkOrange} />
           </TouchableOpacity>
         </View>
-      )}
 
-      {/* 2. HERO SHOWCASE (WITHOUT PREVIEW OVERFLOW) */}
-      <View style={styles.heroCard}>
-        <View style={styles.heroBadge}>
-          <Sparkles size={12} color={COLORS.darkOrange} />
-          <Text style={styles.heroBadgeText}>OFFICIAL UNIVERSITY BLACK BOOK MAKER</Text>
+        {/* Quick Filter Switch Button */}
+        <TouchableOpacity 
+          style={styles.quickFilterToggle}
+          onPress={() => navigateTo('explore')}
+          activeOpacity={0.85}
+        >
+          <SlidersHorizontal size={14} color={COLORS.navy} />
+          <Text style={styles.quickFilterToggleText}>SPECS</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ================= 4. PROMOTIONAL HERO BANNER ("Foodie Weekend" Style) ================= */}
+      <View style={styles.heroPromoCard}>
+        <View style={styles.promoDecorativeCircleLeft}>
+          <Image 
+            source={{ uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80' }} 
+            style={styles.promoBookThumb}
+          />
         </View>
 
-        <Text style={styles.heroHeading}>
-          Your University Black Book.{'\n'}Crafted to Absolute Perfection.
-        </Text>
-        
-        <Text style={styles.heroSubtitle}>
-          Engineered strictly in compliance with official university guidelines. Deep heated 24K gold foil stamping, archival acid-free bond paper, and rigid hardcover binding.
-        </Text>
-
-        <View style={styles.heroCtaRow}>
+        <View style={styles.promoCenterContent}>
+          <View style={styles.promoTagRow}>
+            <Sparkles size={13} color="#FBBF24" />
+            <Text style={styles.promoTagName}>Viva & Submission Season</Text>
+          </View>
+          <Text style={styles.promoBigOffer}>Flat ₹100 OFF on 3+ Copies!</Text>
           <TouchableOpacity 
-            style={styles.heroPrimaryBtn}
+            style={styles.promoOrderNowBtn}
             onPress={() => handleStartCustomizing('customized-black-book')}
-            activeOpacity={0.85}
+            activeOpacity={0.88}
           >
-            <Text style={styles.heroPrimaryBtnText}>Create Your Black Book</Text>
-            <ArrowRight size={16} color={COLORS.white} />
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.heroSecondaryBtn}
-            onPress={() => navigateTo('explore')}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.heroSecondaryBtnText}>Compare Specs & Guidelines</Text>
+            <Text style={styles.promoOrderNowText}>ORDER NOW</Text>
+            <ArrowRight size={13} color={COLORS.navy} strokeWidth={2.6} />
           </TouchableOpacity>
         </View>
 
-        {/* 3 Trust Features */}
-        <View style={styles.trustRow}>
-          <View style={styles.trustItem}>
-            <CheckCircle size={14} color={COLORS.success} />
-            <Text style={styles.trustItemText}>University Approved Formats</Text>
-          </View>
-          <View style={styles.trustItem}>
-            <CheckCircle size={14} color={COLORS.success} />
-            <Text style={styles.trustItemText}>24K Thermal Foil Embossing</Text>
-          </View>
-          <View style={styles.trustItem}>
-            <CheckCircle size={14} color={COLORS.success} />
-            <Text style={styles.trustItemText}>24-48h Campus Delivery</Text>
-          </View>
+        <View style={styles.promoDecorativeCircleRight}>
+          <Image 
+            source={{ uri: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=300&q=80' }} 
+            style={styles.promoBookThumb}
+          />
         </View>
       </View>
 
-      {/* 3. OFFICIAL BLACK BOOK EDITIONS */}
-      <View style={styles.section}>
+      {/* ================= 5. QUICK DEAL TILES (HORIZONTAL 4 CARDS) ================= */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dealTilesRow}>
+        {dealTiles.map((tile) => {
+          const IconC = tile.icon;
+          return (
+            <TouchableOpacity 
+              key={tile.id}
+              style={styles.dealTileCard}
+              onPress={() => handleStartCustomizing('customized-black-book')}
+              activeOpacity={0.85}
+            >
+              <View style={styles.dealTileTopRow}>
+                <Text style={styles.dealTileHeading}>{tile.title}</Text>
+                <IconC size={15} color={tile.color} />
+              </View>
+              <Text style={styles.dealTileSub}>{tile.subtitle}</Text>
+              <View style={[styles.dealTileTag, { backgroundColor: `${tile.color}18` }]}>
+                <Text style={[styles.dealTileTagText, { color: tile.color }]}>{tile.tag}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* ================= 6. FILTER PILLS (HORIZONTAL ROW) ================= */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterPillsRow}>
+        {filterPills.map((pill) => {
+          const isSelected = activeFilter === pill.id;
+          return (
+            <TouchableOpacity
+              key={pill.id}
+              style={[styles.filterPill, isSelected && styles.filterPillActive]}
+              onPress={() => setActiveFilter(pill.id)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.filterPillText, isSelected && styles.filterPillTextActive]}>
+                {pill.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* ================= 7. PRODUCT CARDS (SWIGGY FOOD/RESTAURANT STYLE) ================= */}
+      <View style={styles.productsSection}>
         <View style={styles.sectionHeaderRow}>
-          <View>
-            <Text style={styles.sectionPreTitle}>ACCREDITED EDITIONS</Text>
-            <Text style={styles.sectionTitle}>Choose Your Black Book Edition</Text>
-          </View>
-          <TouchableOpacity 
-            style={styles.compareBtn}
-            onPress={() => navigateTo('explore')}
-          >
-            <Text style={styles.compareBtnText}>View All Specs</Text>
-            <ChevronRight size={14} color={COLORS.oceanBlue} />
+          <Text style={styles.sectionTitle}>Recommended Black Books</Text>
+          <TouchableOpacity onPress={() => navigateTo('explore')}>
+            <Text style={styles.sectionSeeAll}>See All ({BLACK_BOOK_PRODUCTS.length})</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.editionsGrid}>
-          {blackBookEditions.map((edition) => (
-            <View key={edition.id} style={styles.editionCard}>
-              <BlackBookCoverThumbnail 
-                editionName={edition.name}
-                badge={edition.badge}
-                height={150}
-              />
+        <View style={styles.productsGrid}>
+          {displayedProducts.map((product) => {
+            const isWish = wishlist.includes(product.id);
+            return (
+              <View key={product.id} style={styles.productCard}>
+                {/* Thumbnail Container with Discount Banner & Wishlist Heart */}
+                <View style={styles.imageWrap}>
+                  <Image source={{ uri: product.image }} style={styles.productImage} resizeMode="cover" />
+                  
+                  {/* Heart Button */}
+                  <TouchableOpacity 
+                    style={styles.wishlistBtn}
+                    onPress={() => toggleWishlist(product.id)}
+                    activeOpacity={0.85}
+                    accessibilityLabel="Toggle Wishlist"
+                  >
+                    <Heart 
+                      size={17} 
+                      color={isWish ? COLORS.darkOrange : COLORS.white} 
+                      fill={isWish ? COLORS.darkOrange : 'rgba(0,0,0,0.3)'} 
+                    />
+                  </TouchableOpacity>
 
-              <View style={styles.editionBody}>
-                <Text style={styles.editionName}>{edition.name}</Text>
-                <Text style={styles.editionTagline}>{edition.tagline}</Text>
-
-                <View style={styles.specsRow}>
-                  <Text style={styles.specItem}>✓ {edition.specifications.paperOptions}</Text>
-                  <Text style={styles.specItem}>✓ {edition.specifications.turnaround}</Text>
+                  {/* Bottom Image Discount Ribbon */}
+                  <View style={styles.discountRibbon}>
+                    <Text style={styles.discountRibbonText}>
+                      SAVE ₹{product.originalPrice - product.startingPrice} • UNIVERSITY COMPLIANT
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={styles.priceRow}>
-                  <View>
-                    <Text style={styles.startingAtText}>Starting from</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                      <Text style={styles.priceCurrent}>₹{edition.startingPrice}</Text>
-                      <Text style={styles.priceOriginal}>₹{edition.originalPrice}</Text>
-                    </View>
+                {/* Details Container */}
+                <View style={styles.cardDetails}>
+                  <Text style={styles.cardTitle} numberOfLines={1}>{product.name}</Text>
+                  
+                  <View style={styles.cardPriceRow}>
+                    <Text style={styles.cardPrice}>₹{product.startingPrice}</Text>
+                    <Text style={styles.cardOriginalPrice}>₹{product.originalPrice}</Text>
                   </View>
 
+                  {/* Rating Badge */}
+                  <View style={styles.ratingRow}>
+                    <View style={styles.ratingPill}>
+                      <Star size={11} color={COLORS.white} fill={COLORS.white} />
+                      <Text style={styles.ratingPillText}>{product.rating}</Text>
+                    </View>
+                    <Text style={styles.turnaroundText}>• {product.specifications.turnaround}</Text>
+                  </View>
+
+                  <Text style={styles.specsCategoryText} numberOfLines={1}>
+                    {product.specifications.binding} • {product.category}
+                  </Text>
+
+                  {/* Customize / Order Action Button */}
                   <TouchableOpacity 
-                    style={styles.selectEditionBtn}
-                    onPress={() => handleStartCustomizing(edition.id)}
+                    style={styles.customizeCardBtn}
+                    onPress={() => handleStartCustomizing(product.id)}
                     activeOpacity={0.85}
                   >
-                    <Text style={styles.selectEditionBtnText}>Select & Build</Text>
-                    <ArrowRight size={14} color={COLORS.white} />
+                    <Text style={styles.customizeCardBtnText}>Customize & Order</Text>
+                    <ArrowRight size={13} color={COLORS.white} />
                   </TouchableOpacity>
                 </View>
               </View>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* 4. 5-STEP STREAMLINED FLOW */}
-      <View style={styles.section}>
-        <View style={styles.flowCard}>
-          <Text style={styles.flowCardPreTitle}>STREAMLINED WORKFLOW</Text>
-          <Text style={styles.flowCardTitle}>How Print Bizz Delivers Perfection</Text>
-
-          <View style={styles.stepsContainer}>
-            {[
-              {
-                step: '1',
-                title: 'Select Edition',
-                sub: 'Choose between University Standard, Executive Deluxe, or Doctoral PhD.',
-                icon: BookOpen,
-              },
-              {
-                step: '2',
-                title: 'Upload Manuscript',
-                sub: 'Drag & drop your PDF or Word document with automated preflight validation.',
-                icon: UploadCloud,
-              },
-              {
-                step: '3',
-                title: 'Customize Cover & Foil',
-                sub: 'Configure heated 24K gold foil stamping with your name, college, and title.',
-                icon: Sliders,
-              },
-              {
-                step: '4',
-                title: 'Live 3D Book Preview',
-                sub: 'Inspect your photorealistic virtual 3D book and review layout before printing.',
-                icon: Eye,
-              },
-              {
-                step: '5',
-                title: 'Fast Campus Dispatch',
-                sub: 'Handcrafted, bound, and delivered directly to your college campus.',
-                icon: Truck,
-              },
-            ].map((st, i) => (
-              <View key={st.step} style={styles.stepItemRow}>
-                <View style={styles.stepNumberBadge}>
-                  <st.icon size={15} color={COLORS.white} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.stepTitle}>{st.title}</Text>
-                  <Text style={styles.stepSub}>{st.sub}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-      </View>
-
-      {/* 5. CRAFTSMANSHIP GUARANTEE */}
-      <View style={styles.section}>
-        <View style={styles.craftsmanshipBox}>
-          <ShieldCheck size={32} color={COLORS.navy} />
-          <Text style={styles.craftTitle}>100% Viva Voce Academic Guarantee</Text>
-          <Text style={styles.craftSub}>
-            If your college department or external examiner rejects your project report due to printing margins or binding non-compliance, Print Bizz re-prints and re-binds your Black Book completely free of charge.
-          </Text>
+            );
+          })}
         </View>
       </View>
     </ScrollView>
@@ -245,378 +360,478 @@ export const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0F172A', // Deep modern midnight slate background like Swiggy dark theme
   },
   contentWrap: {
-    padding: SPACING.base,
-    paddingBottom: 90,
-    maxWidth: 1100,
-    width: '100%',
-    alignSelf: 'center',
+    paddingBottom: 60,
   },
-  verifiedStudentBar: {
+
+  /* 1. Header */
+  topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#FED7AA',
-    borderRadius: RADIUS.md,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: SPACING.md,
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-  },
-  verifiedStudentLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
-  },
-  verifiedIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#FEF3C7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  verifiedStudentName: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: COLORS.navy,
-  },
-  verifiedSmallBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: RADIUS.full,
-  },
-  verifiedSmallBadgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#15803D',
-  },
-  verifiedStudentSub: {
-    fontSize: 11,
-    color: COLORS.secondaryText,
-    marginTop: 1,
-  },
-  editProfilePill: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: RADIUS.sm,
-  },
-  editProfilePillText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.navy,
-  },
-  heroCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    borderWidth: 1,
-    borderColor: '#FED7AA',
-    marginBottom: SPACING.lg,
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-  },
-  heroBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: RADIUS.full,
-    alignSelf: 'flex-start',
-    marginBottom: 10,
-  },
-  heroBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: COLORS.darkOrange,
-    letterSpacing: 0.5,
-  },
-  heroHeading: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: COLORS.navy,
-    lineHeight: 28,
-    marginBottom: 8,
-  },
-  heroSubtitle: {
-    fontSize: 13,
-    color: COLORS.secondaryText,
-    lineHeight: 19,
-    marginBottom: 16,
-  },
-  heroCtaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 16,
-  },
-  heroPrimaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: COLORS.navy,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: RADIUS.sm,
-    shadowColor: COLORS.navy,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  heroPrimaryBtnText: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  heroSecondaryBtn: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: COLORS.border,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: RADIUS.sm,
-    justifyContent: 'center',
+    paddingTop: 14,
+    paddingBottom: 8,
   },
-  heroSecondaryBtnText: {
-    color: COLORS.navy,
-    fontSize: 13,
-    fontWeight: '700',
+  locationBlock: {
+    flex: 1,
+    marginRight: 12,
   },
-  trustRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    paddingTop: 12,
-  },
-  trustItem: {
+  locationTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  trustItemText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.secondaryText,
-  },
-  section: {
-    marginBottom: SPACING.lg,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.md,
-  },
-  sectionPreTitle: {
-    fontSize: 10,
+  locationTitleText: {
+    fontSize: 16,
     fontWeight: '800',
-    color: COLORS.darkOrange,
-    letterSpacing: 0.8,
+    color: COLORS.white,
+    maxWidth: 240,
   },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: COLORS.navy,
+  locationSubText: {
+    fontSize: 11.5,
+    color: '#94A3B8',
     marginTop: 2,
+    maxWidth: 280,
   },
-  compareBtn: {
+  profileAvatarBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarCircleGuest: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#1E293B',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  avatarCircleRegistered: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: COLORS.darkOrange,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitials: {
+    color: COLORS.white,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+
+  /* 2. Category Row */
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginTop: 12,
+    gap: 8,
+  },
+  categoryCard: {
+    flex: 1,
+    backgroundColor: '#1E293B',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#334155',
+    position: 'relative',
+  },
+  categoryCardActive: {
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  categoryIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryIconWrapActive: {
+    backgroundColor: COLORS.navy,
+  },
+  catBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 4,
+    backgroundColor: 'rgba(234, 88, 12, 0.2)',
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  catBadgeActive: {
+    backgroundColor: COLORS.darkOrange,
+  },
+  catBadgeText: {
+    fontSize: 7.5,
+    fontWeight: '800',
+    color: '#FB923C',
+  },
+  catBadgeTextActive: {
+    color: COLORS.white,
+  },
+  categoryLabel: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#E2E8F0',
+    marginTop: 6,
+    textAlign: 'center',
+    letterSpacing: 0.3,
+  },
+  categoryLabelActive: {
+    color: COLORS.navy,
+  },
+
+  /* 3. Search Bar */
+  searchBarWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginTop: 14,
+    gap: 10,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    height: 48,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13.5,
+    color: COLORS.navy,
+    paddingVertical: 0,
+    height: '100%',
+  },
+  micButton: {
+    padding: 6,
+  },
+  quickFilterToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-  },
-  compareBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.oceanBlue,
-  },
-  editionsGrid: {
-    gap: SPACING.md,
-  },
-  editionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: '#FED7AA',
-    overflow: 'hidden',
-    shadowColor: COLORS.shadowColor,
+    backgroundColor: COLORS.white,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    height: 48,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  editionImageWrap: {
-    height: 140,
-    width: '100%',
+  quickFilterToggleText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: COLORS.navy,
+    letterSpacing: 0.5,
+  },
+
+  /* 4. Promotional Hero Banner */
+  heroPromoCard: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 20,
+    backgroundColor: '#1E293B',
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#334155',
+    overflow: 'hidden',
     position: 'relative',
   },
-  editionImage: {
+  promoDecorativeCircleLeft: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+  },
+  promoDecorativeCircleRight: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#38BDF8',
+  },
+  promoBookThumb: {
     width: '100%',
     height: '100%',
   },
-  editionBadgePill: {
+  promoCenterContent: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 10,
+  },
+  promoTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  promoTagName: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FBBF24',
+    letterSpacing: 0.5,
+  },
+  promoBigOffer: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: COLORS.white,
+    textAlign: 'center',
+    marginVertical: 4,
+  },
+  promoOrderNowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#FBBF24',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: RADIUS.full,
+    marginTop: 4,
+  },
+  promoOrderNowText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: COLORS.navy,
+    letterSpacing: 0.5,
+  },
+
+  /* 5. Deal Tiles */
+  dealTilesRow: {
+    paddingHorizontal: 16,
+    marginTop: 16,
+    gap: 10,
+  },
+  dealTileCard: {
+    width: 130,
+    backgroundColor: '#1E293B',
+    borderRadius: 14,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  dealTileTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dealTileHeading: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: COLORS.white,
+  },
+  dealTileSub: {
+    fontSize: 9.5,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  dealTileTag: {
+    marginTop: 8,
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  dealTileTagText: {
+    fontSize: 8.5,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+
+  /* 6. Filter Pills */
+  filterPillsRow: {
+    paddingHorizontal: 16,
+    marginTop: 16,
+    gap: 8,
+  },
+  filterPill: {
+    backgroundColor: '#1E293B',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  filterPillActive: {
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.white,
+  },
+  filterPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#94A3B8',
+    letterSpacing: 0.4,
+  },
+  filterPillTextActive: {
+    color: COLORS.navy,
+    fontWeight: '800',
+  },
+
+  /* 7. Product Cards */
+  productsSection: {
+    paddingHorizontal: 16,
+    marginTop: 22,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: COLORS.white,
+  },
+  sectionSeeAll: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: COLORS.darkOrange,
+  },
+  productsGrid: {
+    gap: 16,
+  },
+  productCard: {
+    backgroundColor: '#1E293B',
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  imageWrap: {
+    width: '100%',
+    height: 170,
+    position: 'relative',
+    backgroundColor: '#0F172A',
+  },
+  productImage: {
+    width: '100%',
+    height: '100%',
+  },
+  wishlistBtn: {
     position: 'absolute',
     top: 10,
-    left: 10,
-    backgroundColor: COLORS.navy,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: RADIUS.xs,
+    right: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  editionBadgeText: {
-    color: COLORS.white,
+  discountRibbon: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  discountRibbonText: {
+    color: '#38BDF8',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  editionBody: {
+  cardDetails: {
     padding: 14,
   },
-  editionName: {
+  cardTitle: {
     fontSize: 15,
-    fontWeight: '900',
-    color: COLORS.navy,
+    fontWeight: '800',
+    color: COLORS.white,
   },
-  editionTagline: {
-    fontSize: 11,
-    color: COLORS.secondaryText,
-    marginTop: 2,
-    marginBottom: 8,
-  },
-  specsRow: {
-    gap: 3,
-    marginBottom: 12,
-  },
-  specItem: {
-    fontSize: 11,
-    color: '#0F766E',
-    fontWeight: '600',
-  },
-  priceRow: {
+  cardPriceRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    paddingTop: 10,
+    alignItems: 'baseline',
+    gap: 8,
+    marginTop: 4,
   },
-  startingAtText: {
-    fontSize: 10,
-    color: COLORS.mutedText,
-  },
-  priceCurrent: {
-    fontSize: 18,
+  cardPrice: {
+    fontSize: 16,
     fontWeight: '900',
-    color: COLORS.navy,
+    color: COLORS.white,
   },
-  priceOriginal: {
-    fontSize: 12,
-    color: COLORS.mutedText,
+  cardOriginalPrice: {
+    fontSize: 13,
+    color: '#94A3B8',
     textDecorationLine: 'line-through',
   },
-  selectEditionBtn: {
+  ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: COLORS.navy,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: RADIUS.sm,
+    marginTop: 6,
   },
-  selectEditionBtnText: {
-    color: COLORS.white,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  flowCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    borderWidth: 1,
-    borderColor: '#FED7AA',
-  },
-  flowCardPreTitle: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: COLORS.darkOrange,
-    letterSpacing: 0.8,
-  },
-  flowCardTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: COLORS.navy,
-    marginTop: 2,
-    marginBottom: 14,
-  },
-  stepsContainer: {
-    gap: 12,
-  },
-  stepItemRow: {
+  ratingPill: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#16A34A',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
-  stepNumberBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: COLORS.navy,
+  ratingPillText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: COLORS.white,
+  },
+  turnaroundText: {
+    fontSize: 11.5,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  specsCategoryText: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 4,
+  },
+  customizeCardBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
+    gap: 6,
+    backgroundColor: COLORS.darkOrange,
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginTop: 12,
   },
-  stepTitle: {
+  customizeCardBtnText: {
     fontSize: 13,
     fontWeight: '800',
-    color: COLORS.navy,
-  },
-  stepSub: {
-    fontSize: 11,
-    color: COLORS.secondaryText,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  craftsmanshipBox: {
-    backgroundColor: '#FEF3C7',
-    borderRadius: RADIUS.md,
-    padding: SPACING.lg,
-    alignItems: 'center',
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  craftTitle: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: COLORS.navy,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  craftSub: {
-    fontSize: 12,
-    color: '#78350F',
-    textAlign: 'center',
-    marginTop: 4,
-    lineHeight: 18,
+    color: COLORS.white,
   },
 });

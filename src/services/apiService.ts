@@ -74,68 +74,9 @@ export const INITIAL_TRACKING_STAGES: TrackingStage[] = [
   },
 ];
 
-export const MOCK_SAVED_ADDRESSES: CustomerAddress[] = [
-  {
-    id: 'addr-1',
-    label: 'College Campus / Hostel',
-    recipientName: 'Aarav Sharma',
-    phone: '+91 98201 44521',
-    line1: 'Room 304, Boys Hostel B, VJTI Campus',
-    area: 'H. R. Mahajani Road, Matunga East',
-    city: 'Mumbai',
-    pincode: '400019',
-    landmark: 'Near VJTI Quadrangle',
-    instructions: 'Call upon arrival at the college security gate',
-    isDefault: true,
-  },
-  {
-    id: 'addr-2',
-    label: 'Home Address',
-    recipientName: 'Aarav Sharma',
-    phone: '+91 98201 44521',
-    line1: 'Flat 702, Nilgiri Heights, Ghodbunder Road',
-    area: 'Kavesar',
-    city: 'Thane',
-    pincode: '400615',
-    landmark: 'Opposite Suraj Water Park',
-    instructions: 'Leave at front desk with security if unavailable',
-    isDefault: false,
-  },
-];
+export const MOCK_SAVED_ADDRESSES: CustomerAddress[] = [];
 
-export const MOCK_EXISTING_ORDERS: Order[] = [
-  {
-    id: 'order-101',
-    orderNumber: 'PB-2026-90412',
-    orderDate: '01 Nov 2026, 04:30 PM',
-    estimatedDeliveryDate: '05 Nov 2026 (Estimated)',
-    customerName: 'Aarav Sharma',
-    customerPhone: '+91 98201 44521',
-    customerEmail: 'aarav.sharma@vjti.ac.in',
-    address: MOCK_SAVED_ADDRESSES[0],
-    items: [],
-    pricing: {
-      basePrice: 349,
-      paperGsmExtra: 25,
-      colorPagesCost: 45,
-      bindingCost: 0,
-      addOnsCost: 85,
-      unitPrice: 504,
-      copies: 2,
-      subtotal: 958,
-      deliveryFee: 0,
-      gstTax: 115,
-      total: 1073,
-      discount: 50,
-    },
-    paymentMethod: 'UPI',
-    paymentStatus: 'PAID',
-    transactionId: 'TXN-UPI-98218942-OKAXIS',
-    orderStatus: 'Printing',
-    barcodeToken: 'PB-2026-90412-SECURE-VERIFIED',
-    stages: INITIAL_TRACKING_STAGES,
-  },
-];
+export const MOCK_EXISTING_ORDERS: Order[] = [];
 
 export const api = {
   generateOrderVerificationToken: (orderNumber: string): string => {

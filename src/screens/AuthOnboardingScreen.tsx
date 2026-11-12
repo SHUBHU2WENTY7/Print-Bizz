@@ -37,25 +37,21 @@ import {
 } from 'lucide-react-native';
 
 export const AuthOnboardingScreen: React.FC = () => {
-  const { registerUser, navigateTo } = useAppStore();
+  const { registerUser, navigateTo, userProfile } = useAppStore();
 
-  const [name, setName] = useState('Aarav Sharma');
-  const [email, setEmail] = useState('aarav.sharma@vjti.ac.in');
-  const [phone, setPhone] = useState('+91 98201 44521');
+  const [name, setName] = useState(userProfile.name || '');
+  const [email, setEmail] = useState(userProfile.email || '');
+  const [phone, setPhone] = useState(userProfile.phone || '');
 
-  const [selectedState, setSelectedState] = useState('Maharashtra');
-  const [selectedCity, setSelectedCity] = useState('Mumbai');
-  const [selectedUniversity, setSelectedUniversity] = useState('University of Mumbai');
-  const [selectedCollege, setSelectedCollege] = useState('Veermata Jijabai Technological Institute (VJTI)');
-  const [collegeAddress, setCollegeAddress] = useState('H. R. Mahajani Road, Matunga East, Mumbai, Maharashtra 400019');
-  const [rollNumber, setRollNumber] = useState('221080045');
+  const [selectedState, setSelectedState] = useState(userProfile.state || 'Maharashtra');
+  const [selectedCity, setSelectedCity] = useState(userProfile.city || 'Mumbai');
+  const [selectedUniversity, setSelectedUniversity] = useState(userProfile.university || '');
+  const [selectedCollege, setSelectedCollege] = useState(userProfile.college || '');
+  const [collegeAddress, setCollegeAddress] = useState(userProfile.collegeAddress || '');
+  const [rollNumber, setRollNumber] = useState(userProfile.rollNumber || '');
 
-  const [idCardFront, setIdCardFront] = useState<string | null>(
-    'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80'
-  );
-  const [idCardBack, setIdCardBack] = useState<string | null>(
-    'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=600&q=80'
-  );
+  const [idCardFront, setIdCardFront] = useState<string | null>(userProfile.idCardFront || null);
+  const [idCardBack, setIdCardBack] = useState<string | null>(userProfile.idCardBack || null);
 
   const [showStatePicker, setShowStatePicker] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
@@ -68,8 +64,26 @@ export const AuthOnboardingScreen: React.FC = () => {
   const frontInputRef = useRef<HTMLInputElement | null>(null);
   const backInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Filter available cities by state
-  const availableCities = CITIES_BY_STATE[selectedState] || ['Mumbai', 'Pune', 'Nagpur'];
+  // Filter available cities by state ONLY
+  const availableCities = CITIES_BY_STATE[selectedState] || [];
+
+  const handleSelectState = (st: string) => {
+    setSelectedState(st);
+    const cities = CITIES_BY_STATE[st] || [];
+    setSelectedCity(cities[0] || '');
+    setSelectedCollege('');
+    setCollegeAddress('');
+    setSelectedUniversity('');
+    setShowStatePicker(false);
+  };
+
+  const handleSelectCity = (ct: string) => {
+    setSelectedCity(ct);
+    setSelectedCollege('');
+    setCollegeAddress('');
+    setSelectedUniversity('');
+    setShowCityPicker(false);
+  };
 
   // Filter available universities
   const availableUniversities = UNIVERSITIES_LIST.filter((u) => {
@@ -80,10 +94,11 @@ export const AuthOnboardingScreen: React.FC = () => {
     );
   });
 
-  // Filter available colleges by city and search
+  // Filter available colleges strictly by state AND city
   const availableColleges = COLLEGES_DATA.filter((c) => {
-    const matchesCity = c.city.toLowerCase() === selectedCity.toLowerCase() || c.state === selectedState;
-    if (!collegeSearch) return matchesCity;
+    const matchesCity = c.state === selectedState && c.city.toLowerCase() === selectedCity.toLowerCase();
+    if (!matchesCity) return false;
+    if (!collegeSearch) return true;
     return (
       c.name.toLowerCase().includes(collegeSearch.toLowerCase()) ||
       c.shortName.toLowerCase().includes(collegeSearch.toLowerCase()) ||
@@ -108,16 +123,22 @@ export const AuthOnboardingScreen: React.FC = () => {
   const handleFrontUpload = (e: any) => {
     const file = e.target?.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setIdCardFront(url);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setIdCardFront(ev.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const handleBackUpload = (e: any) => {
     const file = e.target?.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setIdCardBack(url);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setIdCardBack(ev.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -178,7 +199,7 @@ export const AuthOnboardingScreen: React.FC = () => {
         <Text style={styles.bannerSub}>Student Sign-In & Academic Verification</Text>
         <View style={styles.verifiedTag}>
           <ShieldCheck size={14} color="#15803D" />
-          <Text style={styles.verifiedTagText}>Official University Printing Network Across India</Text>
+          <Text style={styles.verifiedTagText}>Student Sign-In & Verification</Text>
         </View>
       </View>
 
@@ -191,7 +212,7 @@ export const AuthOnboardingScreen: React.FC = () => {
             <User size={16} color={COLORS.mutedText} />
             <TextInput
               style={styles.textInput}
-              placeholder="e.g. Aarav Sharma"
+              placeholder="Enter your full legal name"
               value={name}
               onChangeText={setName}
             />
@@ -255,12 +276,7 @@ export const AuthOnboardingScreen: React.FC = () => {
                     <TouchableOpacity
                       key={st}
                       style={[styles.pickerItem, selectedState === st && styles.pickerItemActive]}
-                      onPress={() => {
-                        setSelectedState(st);
-                        const cities = CITIES_BY_STATE[st] || ['Main Campus'];
-                        setSelectedCity(cities[0]);
-                        setShowStatePicker(false);
-                      }}
+                      onPress={() => handleSelectState(st)}
                     >
                       <Text style={[styles.pickerItemText, selectedState === st && styles.pickerItemTextActive]}>
                         {st}
@@ -296,10 +312,7 @@ export const AuthOnboardingScreen: React.FC = () => {
                     <TouchableOpacity
                       key={ct}
                       style={[styles.pickerItem, selectedCity === ct && styles.pickerItemActive]}
-                      onPress={() => {
-                        setSelectedCity(ct);
-                        setShowCityPicker(false);
-                      }}
+                      onPress={() => handleSelectCity(ct)}
                     >
                       <Text style={[styles.pickerItemText, selectedCity === ct && styles.pickerItemTextActive]}>
                         {ct}
@@ -325,7 +338,7 @@ export const AuthOnboardingScreen: React.FC = () => {
               setShowCityPicker(false);
             }}
           >
-            <Text style={styles.dropdownBtnText} numberOfLines={1}>{selectedUniversity}</Text>
+            <Text style={styles.dropdownBtnText} numberOfLines={1}>{selectedUniversity || 'Select or Keep University'}</Text>
             <GraduationCap size={16} color={COLORS.navy} />
           </TouchableOpacity>
 
@@ -360,7 +373,7 @@ export const AuthOnboardingScreen: React.FC = () => {
 
         {/* College Selection */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Select Your College (Auto-detects Address)</Text>
+          <Text style={styles.inputLabel}>Select Your College in {selectedCity}</Text>
           <TouchableOpacity 
             style={styles.dropdownBtn}
             onPress={() => {
@@ -370,7 +383,7 @@ export const AuthOnboardingScreen: React.FC = () => {
               setShowCityPicker(false);
             }}
           >
-            <Text style={styles.dropdownBtnText} numberOfLines={1}>{selectedCollege}</Text>
+            <Text style={styles.dropdownBtnText} numberOfLines={1}>{selectedCollege || `Select College in ${selectedCity}`}</Text>
             <Building size={16} color={COLORS.navy} />
           </TouchableOpacity>
 
@@ -378,26 +391,43 @@ export const AuthOnboardingScreen: React.FC = () => {
             <View style={styles.pickerBox}>
               <TextInput
                 style={styles.pickerSearchInput}
-                placeholder={`Search colleges in ${selectedCity} or India...`}
+                placeholder={`Search colleges in ${selectedCity}...`}
                 value={collegeSearch}
                 onChangeText={setCollegeSearch}
               />
               <ScrollView style={{ maxHeight: 220 }} nestedScrollEnabled>
-                {availableColleges.map((c) => (
-                  <TouchableOpacity
-                    key={c.id}
-                    style={[styles.pickerItem, selectedCollege === c.name && styles.pickerItemActive]}
-                    onPress={() => handleSelectCollege(c)}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.pickerItemText, selectedCollege === c.name && styles.pickerItemTextActive]}>
-                        {c.name}
-                      </Text>
-                      <Text style={styles.pickerItemSub}>{c.address}</Text>
-                    </View>
-                    {selectedCollege === c.name && <Check size={14} color={COLORS.darkOrange} />}
-                  </TouchableOpacity>
-                ))}
+                {availableColleges.length > 0 ? (
+                  availableColleges.map((c) => (
+                    <TouchableOpacity
+                      key={c.id}
+                      style={[styles.pickerItem, selectedCollege === c.name && styles.pickerItemActive]}
+                      onPress={() => handleSelectCollege(c)}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.pickerItemText, selectedCollege === c.name && styles.pickerItemTextActive]}>
+                          {c.name}
+                        </Text>
+                        <Text style={styles.pickerItemSub}>{c.address} • Affiliated to: {c.university}</Text>
+                      </View>
+                      {selectedCollege === c.name && <Check size={14} color={COLORS.darkOrange} />}
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <View style={{ padding: 12 }}>
+                    <Text style={{ fontSize: 12, color: COLORS.secondaryText, marginBottom: 8 }}>
+                      No colleges pre-listed in {selectedCity}. You can type your college name:
+                    </Text>
+                    <TextInput
+                      style={styles.pickerSearchInput}
+                      placeholder="Type your college name..."
+                      value={selectedCollege}
+                      onChangeText={(val) => {
+                        setSelectedCollege(val);
+                        setCollegeAddress(`${val}, ${selectedCity}, ${selectedState}`);
+                      }}
+                    />
+                  </View>
+                )}
               </ScrollView>
             </View>
           )}

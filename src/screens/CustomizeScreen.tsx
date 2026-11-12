@@ -51,6 +51,19 @@ export const CustomizeScreen: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const sealInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleSealUpload = (e: any) => {
+    const file = e.target?.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        handleCoverTextChange('collegeLogo', dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Sync profile details if available
   useEffect(() => {
@@ -139,16 +152,25 @@ export const CustomizeScreen: React.FC = () => {
     <View style={styles.container}>
       {/* Hidden Web File Input */}
       {Platform.OS === 'web' && (
-        <input 
-          type="file"
-          ref={fileInputRef as any}
-          style={{ display: 'none' }}
-          accept=".pdf,.doc,.docx"
-          onChange={(e) => {
-            const f = e.target?.files?.[0];
-            if (f) handleFileSelected(f);
-          }}
-        />
+        <>
+          <input 
+            type="file"
+            ref={fileInputRef as any}
+            style={{ display: 'none' }}
+            accept=".pdf,.doc,.docx"
+            onChange={(e) => {
+              const f = e.target?.files?.[0];
+              if (f) handleFileSelected(f);
+            }}
+          />
+          <input 
+            type="file"
+            ref={sealInputRef as any}
+            style={{ display: 'none' }}
+            accept="image/*"
+            onChange={handleSealUpload}
+          />
+        </>
       )}
 
       {/* Subway Stepper Navigation Bar */}
@@ -582,9 +604,48 @@ export const CustomizeScreen: React.FC = () => {
                       style={styles.textInput}
                       value={customization.cover.spineText}
                       onChangeText={(val) => handleCoverTextChange('spineText', val)}
-                      placeholder="e.g. B.TECH THESIS - AARAV SHARMA - 2026"
+                      placeholder="e.g. B.TECH THESIS - CANDIDATE NAME - 2026"
                     />
                   </View>
+                </View>
+
+                {/* College Seal / Logo Upload */}
+                <Text style={styles.fieldSectionLabel}>College Seal / Logo</Text>
+                <View style={{ marginBottom: 18 }}>
+                  {customization.cover.collegeLogo ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', gap: 12 }}>
+                      <Image 
+                        source={{ uri: customization.cover.collegeLogo }} 
+                        style={{ width: 44, height: 44, borderRadius: 6, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#CBD5E1' }}
+                        resizeMode="contain"
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.navy }}>College Seal / Logo Uploaded</Text>
+                        <Text style={{ fontSize: 11, color: COLORS.secondaryText }}>Will be embossed in metallic foil on front cover</Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => sealInputRef.current?.click()}
+                        style={{ paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#E2E8F0', borderRadius: 4 }}
+                      >
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: COLORS.navy }}>Change</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleCoverTextChange('collegeLogo', null as any)}
+                        style={{ paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#FEE2E2', borderRadius: 4 }}
+                      >
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: COLORS.error }}>Remove</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() => sealInputRef.current?.click()}
+                      style={{ padding: 16, backgroundColor: '#FFFDF7', borderWidth: 1.5, borderColor: '#FDE68A', borderStyle: 'dashed', borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <UploadCloud size={24} color={COLORS.darkOrange} style={{ marginBottom: 6 }} />
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.navy }}>Upload College Seal / Logo</Text>
+                      <Text style={{ fontSize: 11, color: COLORS.secondaryText, marginTop: 2 }}>Click to upload PNG, JPG, or SVG (optional)</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 {/* Add-ons Checklist */}

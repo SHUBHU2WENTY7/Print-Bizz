@@ -42,7 +42,7 @@ export const BlackBookCoverThumbnail: React.FC<BlackBookCoverThumbnailProps> = (
 
           {/* Academic Stamping Typography */}
           <Text style={[styles.academicLabel, { color: foilHex }]}>
-            UNIVERSITY ACCREDITED
+            UNIVERSITY EDITION
           </Text>
           
           <Text style={[styles.titleText, { color: foilHex, textShadowColor: foilGlow }]} numberOfLines={1}>
@@ -57,7 +57,7 @@ export const BlackBookCoverThumbnail: React.FC<BlackBookCoverThumbnailProps> = (
           <View style={styles.specStampRow}>
             <Sparkles size={8} color={foilHex} />
             <Text style={[styles.specStampText, { color: foilHex }]}>
-              THERMAL METALLIC FOIL • 100% COMPLIANT
+              THERMAL METALLIC FOIL EMBOSSED
             </Text>
             <Sparkles size={8} color={foilHex} />
           </View>

@@ -111,13 +111,13 @@ export const SavedAddressesScreen: React.FC = () => {
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Flat / Room / Building / Department</Text>
-              <TextInput style={styles.input} value={line1} onChangeText={setLine1} placeholder="Room 304, Hostel B, VJTI" />
+              <TextInput style={styles.input} value={line1} onChangeText={setLine1} placeholder="e.g. Room 304, Hostel B / Campus Gate" />
             </View>
 
             <View style={styles.rowInputs}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={styles.inputLabel}>Area / Locality</Text>
-                <TextInput style={styles.input} value={area} onChangeText={setArea} placeholder="Matunga East" />
+                <TextInput style={styles.input} value={area} onChangeText={setArea} placeholder="e.g. Campus Road / Area" />
               </View>
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={styles.inputLabel}>City</Text>

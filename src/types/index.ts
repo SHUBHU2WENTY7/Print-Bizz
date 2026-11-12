@@ -29,6 +29,7 @@ export interface CoverCustomization {
   coverColor: 'Classic Midnight Black' | 'Royal Navy Blue' | 'Deep Maroon' | 'Dark Emerald';
   embossingFoil: 'Gold Foil' | 'Silver Foil' | 'Rose Gold';
   finish: 'Matte Laminated' | 'Gloss Laminated';
+  collegeLogo?: string | null;
 }
 
 export interface UserProfile {

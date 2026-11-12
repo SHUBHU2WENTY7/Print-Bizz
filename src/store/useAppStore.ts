@@ -13,7 +13,7 @@ import {
 } from '../types';
 import { BLACK_BOOK_PRODUCTS, INITIAL_CUSTOMIZATION } from '../constants/products';
 import { calculatePrice } from '../services/pricingService';
-import { api, MOCK_EXISTING_ORDERS, MOCK_SAVED_ADDRESSES, INITIAL_TRACKING_STAGES } from '../services/apiService';
+import { api, INITIAL_TRACKING_STAGES } from '../services/apiService';
 
 export type ScreenName = 
   | 'home'
@@ -399,8 +399,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   // Addresses
-  addresses: MOCK_SAVED_ADDRESSES,
-  selectedAddressId: MOCK_SAVED_ADDRESSES[0].id,
+  addresses: [],
+  selectedAddressId: '',
   setSelectedAddressId: (id) => set({ selectedAddressId: id }),
   addAddress: (addr) => {
     const newAddr: CustomerAddress = {
@@ -437,9 +437,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   // Orders
-  orders: MOCK_EXISTING_ORDERS,
-  activeOrder: MOCK_EXISTING_ORDERS[0],
-  selectedOrder: MOCK_EXISTING_ORDERS[0],
+  orders: [],
+  activeOrder: null,
+  selectedOrder: null,
   setActiveOrder: (order) => set({ activeOrder: order }),
   selectOrder: (orderId) => {
     const found = get().orders.find((o) => o.id === orderId || o.orderNumber === orderId);
@@ -560,18 +560,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   // User Profile
   userProfile: {
-    name: 'Aarav Sharma',
-    email: 'aarav.sharma@vjti.ac.in',
-    phone: '+91 98201 44521',
-    state: 'Maharashtra',
-    city: 'Mumbai',
-    college: 'Veermata Jijabai Technological Institute (VJTI)',
-    collegeAddress: 'H. R. Mahajani Road, Matunga East, Mumbai, Maharashtra 400019',
-    university: 'University of Mumbai',
-    rollNumber: '221080045',
+    name: '',
+    email: '',
+    phone: '',
+    state: '',
+    city: '',
+    college: '',
+    collegeAddress: '',
+    university: '',
+    rollNumber: '',
     idCardFront: null,
     idCardBack: null,
-    isRegistered: true,
+    isRegistered: false,
   },
   registerUser: (profile) => {
     set((state) => {
@@ -621,7 +621,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   // Wishlist
-  wishlist: ['customized-black-book'],
+  wishlist: [],
   toggleWishlist: (productId) => {
     set((state) => {
       const exists = state.wishlist.includes(productId);

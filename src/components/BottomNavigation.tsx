@@ -28,7 +28,7 @@ export const BottomNavigation: React.FC = () => {
       icon: (active) => (
         <Home 
           size={22} 
-          color={active ? COLORS.navy : COLORS.secondaryText} 
+          color={active ? COLORS.darkOrange : COLORS.secondaryText} 
           strokeWidth={active ? 2.5 : 2} 
         />
       ),
@@ -39,7 +39,7 @@ export const BottomNavigation: React.FC = () => {
       icon: (active) => (
         <Compass 
           size={22} 
-          color={active ? COLORS.navy : COLORS.secondaryText} 
+          color={active ? COLORS.darkOrange : COLORS.secondaryText} 
           strokeWidth={active ? 2.5 : 2} 
         />
       ),
@@ -50,7 +50,7 @@ export const BottomNavigation: React.FC = () => {
       icon: (active) => (
         <PackageCheck 
           size={22} 
-          color={active ? COLORS.navy : COLORS.secondaryText} 
+          color={active ? COLORS.darkOrange : COLORS.secondaryText} 
           strokeWidth={active ? 2.5 : 2} 
         />
       ),
@@ -62,7 +62,7 @@ export const BottomNavigation: React.FC = () => {
       icon: (active) => (
         <User 
           size={22} 
-          color={active ? COLORS.navy : COLORS.secondaryText} 
+          color={active ? COLORS.darkOrange : COLORS.secondaryText} 
           strokeWidth={active ? 2.5 : 2} 
         />
       ),
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   activeTabLabel: {
-    color: COLORS.navy,
+    color: COLORS.darkOrange,
     fontWeight: '700',
   },
   activeDot: {

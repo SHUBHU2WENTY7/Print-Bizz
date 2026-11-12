@@ -80,8 +80,7 @@ export default function App() {
   const currentScreen = useAppStore((state) => state.currentScreen);
   const userProfile = useAppStore((state) => state.userProfile);
 
-  // If user hasn't completed onboarding/sign-in, direct to auth_onboarding
-  const activeScreenName: ScreenName = !userProfile.isRegistered ? 'auth_onboarding' : currentScreen;
+  const activeScreenName: ScreenName = currentScreen;
   const Screen = screens[activeScreenName] || HomeScreen;
   const isConfirmation = activeScreenName === 'order_confirmation';
   const isOnboarding = activeScreenName === 'auth_onboarding';
@@ -89,11 +88,11 @@ export default function App() {
   return (
     <View style={styles.app}>
       <StatusBar style="auto" />
-      {!isConfirmation && !isOnboarding && (
+      {!isConfirmation && !isOnboarding && activeScreenName !== 'home' && (
         <Header
-          title={activeScreenName === 'home' ? undefined : screenTitles[activeScreenName]}
-          showBack={activeScreenName !== 'home'}
-          showSearch={activeScreenName === 'home' || activeScreenName === 'explore' || activeScreenName === 'search'}
+          title={screenTitles[activeScreenName]}
+          showBack={true}
+          showSearch={activeScreenName === 'explore' || activeScreenName === 'search'}
           showFilter={activeScreenName === 'explore' || activeScreenName === 'search'}
         />
       )}
