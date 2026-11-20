@@ -44,7 +44,7 @@ export const OrderDetailsScreen: React.FC = () => {
       selectProduct(firstItem.product.id);
       navigateTo('customize');
     } else {
-      navigateTo('explore');
+      navigateTo('home');
     }
   };
 

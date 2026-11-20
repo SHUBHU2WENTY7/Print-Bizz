@@ -99,9 +99,9 @@ export const MyOrdersScreen: React.FC = () => {
             </Text>
             <TouchableOpacity 
               style={styles.exploreBtn} 
-              onPress={() => navigateTo('explore')}
+              onPress={() => navigateTo('home')}
             >
-              <Text style={styles.exploreBtnText}>Explore Products</Text>
+              <Text style={styles.exploreBtnText}>Browse Products</Text>
               <ArrowRight size={14} color={COLORS.white} />
             </TouchableOpacity>
           </View>

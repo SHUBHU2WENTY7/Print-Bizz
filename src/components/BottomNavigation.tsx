@@ -4,7 +4,6 @@ import { COLORS, SPACING, RADIUS } from '../constants/theme';
 import { useAppStore, ScreenName } from '../store/useAppStore';
 import { 
   Home, 
-  Compass, 
   PackageCheck, 
   User 
 } from 'lucide-react-native';
@@ -27,17 +26,6 @@ export const BottomNavigation: React.FC = () => {
       screen: 'home',
       icon: (active) => (
         <Home 
-          size={22} 
-          color={active ? COLORS.darkOrange : COLORS.secondaryText} 
-          strokeWidth={active ? 2.5 : 2} 
-        />
-      ),
-    },
-    {
-      name: 'Explore',
-      screen: 'explore',
-      icon: (active) => (
-        <Compass 
           size={22} 
           color={active ? COLORS.darkOrange : COLORS.secondaryText} 
           strokeWidth={active ? 2.5 : 2} 

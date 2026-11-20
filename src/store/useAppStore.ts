@@ -18,7 +18,6 @@ import { api, INITIAL_TRACKING_STAGES } from '../services/apiService';
 export type ScreenName = 
   | 'home'
   | 'auth_onboarding'
-  | 'explore'
   | 'product_details'
   | 'customize'
   | 'document_upload'
@@ -93,7 +92,7 @@ interface AppStore {
   selectOrder: (orderId: string) => void;
   placeOrder: (paymentMethod: Order['paymentMethod'], deliveryInstructions?: string) => Promise<Order>;
 
-  // Filter Modal & Explore Filters
+  // Filter Modal & Filters
   isFilterModalVisible: boolean;
   openFilterModal: () => void;
   closeFilterModal: () => void;
@@ -127,7 +126,7 @@ interface AppStore {
 }
 
 const defaultCustomization: CustomizationState = {
-  productId: 'customized-black-book',
+  productId: 'deluxe-black-book',
   paperSize: 'A4',
   paperGSM: '80 GSM Bond',
   printType: 'Black & White',
@@ -166,7 +165,7 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
     date: '1 day ago',
     read: false,
     type: 'offer',
-    linkScreen: 'explore',
+    linkScreen: 'home',
   },
   {
     id: 'notif-3',
@@ -532,7 +531,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   // Search
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
-  recentSearches: ['Black Book', 'PhD Thesis Binding', 'Gold Foil Embossed', 'A4 Bond Paper', 'Spiral Project Book'],
+  recentSearches: ['Black Book', 'PhD Thesis (Coming Soon)', 'Gold Foil Embossed', 'A4 Bond Paper', 'Executive Deluxe'],
   addRecentSearch: (query) => {
     if (!query.trim()) return;
     set((state) => ({

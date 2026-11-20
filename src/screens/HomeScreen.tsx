@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -6,7 +6,10 @@ import {
   ScrollView, 
   TouchableOpacity,
   TextInput,
-  Image 
+  Image,
+  Animated,
+  Easing,
+  Platform 
 } from 'react-native';
 import { COLORS, RADIUS } from '../constants/theme';
 import { BLACK_BOOK_PRODUCTS } from '../constants/products';
@@ -26,9 +29,10 @@ import {
   User,
   GraduationCap,
   Percent,
-  Flame,
   Star,
-  FileText
+  FileText,
+  ShieldCheck,
+  Clock
 } from 'lucide-react-native';
 
 export const HomeScreen: React.FC = () => {
@@ -41,59 +45,78 @@ export const HomeScreen: React.FC = () => {
     toggleWishlist 
   } = useAppStore();
 
-  const [activeCategory, setActiveCategory] = useState<'blackbooks' | 'express' | 'thesis' | 'spiral'>('blackbooks');
+  const [activeCategory, setActiveCategory] = useState<'blackbooks' | 'express' | 'thesis'>('blackbooks');
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [localSearch, setLocalSearch] = useState('');
 
+  // Smooth Marquee Animation setup
+  const [marqueeAnim] = useState(() => new Animated.Value(0));
+
   const handleStartCustomizing = (productId?: string) => {
-    selectProduct(productId || 'customized-black-book');
+    selectProduct(productId || 'deluxe-black-book');
     navigateTo('customize');
   };
 
   const handleSearchSubmit = () => {
     if (localSearch.trim()) {
       setSearchQuery(localSearch.trim());
-      navigateTo('explore');
+      navigateTo('home');
     }
   };
 
   const collegeDisplay = userProfile.college || (userProfile.city ? `${userProfile.city}, ${userProfile.state}` : 'Select Campus & College');
   const addressDisplay = userProfile.collegeAddress || 'Choose your delivery campus or college address';
 
-  // Quick category services
+  // Quick category services - Spiral removed, Express & Thesis marked COMING SOON
   const categories = [
     { id: 'blackbooks', name: 'BLACK BOOKS', badge: 'POPULAR', icon: BookOpen },
-    { id: 'express', name: 'EXPRESS PRINT', badge: '24 HRS', icon: Zap },
-    { id: 'thesis', name: 'THESIS & PhD', badge: 'ARCHIVAL', icon: GraduationCap },
-    { id: 'spiral', name: 'SPIRAL BIND', badge: 'FROM ₹99', icon: FileText },
+    { id: 'express', name: 'EXPRESS PRINT', badge: 'COMING SOON', icon: Zap },
+    { id: 'thesis', name: 'THESIS & PhD', badge: 'COMING SOON', icon: GraduationCap },
   ];
 
-  // Quick deal tiles (Swiggy style row)
+  // Quick deal tiles with Premium Plastic Covered Delivery & Luxury features
   const dealTiles = [
-    { id: 'deal1', title: 'Flat ₹100 OFF', subtitle: 'On 3+ Copies', tag: 'BESTSELLER', icon: Percent, color: '#D97706' },
-    { id: 'deal2', title: 'Starts ₹99', subtitle: 'Flash Prints', tag: 'FLASH DEALS', icon: Flame, color: '#EA580C' },
-    { id: 'deal3', title: 'Free Delivery', subtitle: 'Above ₹699', tag: 'SAVE ₹49', icon: Award, color: '#2563EB' },
-    { id: 'deal4', title: 'Fast Track 24h', subtitle: 'Express Dispatch', tag: 'BOLT ⚡', icon: Zap, color: '#059669' },
+    { id: 'deal1', title: 'Plastic Covered Pack', subtitle: 'Premium Safe Delivery', tag: 'WEATHERPROOF 🛡️', icon: ShieldCheck, color: '#06B6D4' },
+    { id: 'deal2', title: '24K Gold Stamping', subtitle: 'Heated Metallic Foil', tag: 'LUXURY FOIL ✨', icon: Sparkles, color: '#D97706' },
+    { id: 'deal3', title: 'Free Campus Delivery', subtitle: 'Above ₹699 Orders', tag: 'SAVE ₹49', icon: Award, color: '#2563EB' },
+    { id: 'deal4', title: 'Multi-Layer Bubble Wrap', subtitle: 'Shock & Tamper Proof', tag: '100% SECURE 📦', icon: Zap, color: '#059669' },
+    { id: 'deal5', title: 'Flat ₹100 OFF', subtitle: 'On 3+ Viva Copies', tag: 'BESTSELLER 🔥', icon: Percent, color: '#EA580C' },
+    { id: 'deal6', title: 'Brass Corner Guards', subtitle: 'Edge Protection', tag: 'DELUXE FINISH 💎', icon: Award, color: '#7C3AED' },
+    { id: 'deal7', title: 'Butter Paper Separator', subtitle: 'Viva Certificates', tag: 'FREE INCLUDED', icon: FileText, color: '#10B981' },
+    { id: 'deal8', title: '100 GSM Royal Bond', subtitle: 'Acid-Free Heavy Paper', tag: 'ARCHIVAL GRADE', icon: BookOpen, color: '#E11D48' },
   ];
 
-  // Quick filter pills
+  // Seamless marquee array (duplicate for continuous smooth infinite loop)
+  const marqueeTiles = [...dealTiles, ...dealTiles];
+
+  useEffect(() => {
+    // 8 items * (152 width + 10 gap) = 1296px
+    const singleSetWidth = 8 * 162;
+    marqueeAnim.setValue(0);
+    const anim = Animated.loop(
+      Animated.timing(marqueeAnim, {
+        toValue: -singleSetWidth,
+        duration: 24000,
+        easing: Easing.linear,
+        useNativeDriver: Platform.OS !== 'web',
+      })
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [marqueeAnim]);
+
+  // Premium Feature Pills for Executive Deluxe Edition
   const filterPills = [
-    { id: 'all', label: 'ALL PRODUCTS' },
-    { id: 'discount', label: 'MIN ₹100 OFF' },
-    { id: 'fast', label: '24-48H DISPATCH' },
-    { id: 'hardcover', label: 'RIGID HARDCOVER' },
-    { id: 'gold', label: 'GOLD FOIL' },
-    { id: 'rated', label: '★ 4.9+ RATING' },
+    { id: 'all', label: 'PREMIUM EXECUTIVE DELUX' },
+    { id: 'rexine', label: 'LEATHERETTE REXINE' },
+    { id: 'gold', label: '24K GOLD FOIL' },
+    { id: 'brass', label: 'BRASS CORNER GUARDS' },
+    { id: 'packaging', label: 'PLASTIC COVERED DELIVERY' },
+    { id: 'bond', label: '100 GSM ROYAL BOND' },
   ];
 
-  // Filtered products
-  const displayedProducts = BLACK_BOOK_PRODUCTS.filter((prod) => {
-    if (activeFilter === 'discount') return prod.startingPrice < 400;
-    if (activeFilter === 'fast') return prod.specifications.turnaround.includes('24');
-    if (activeFilter === 'hardcover') return prod.category === 'Black Books';
-    if (activeFilter === 'rated') return prod.rating >= 4.95;
-    return true;
-  });
+  // Only Premium Executive Delux Black Book is featured
+  const displayedProducts = BLACK_BOOK_PRODUCTS;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentWrap} showsVerticalScrollIndicator={false}>
@@ -135,7 +158,7 @@ export const HomeScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* ================= 2. CATEGORY / SERVICE CARDS (4 SQUIRCLE CARDS) ================= */}
+      {/* ================= 2. CATEGORY / SERVICE CARDS ================= */}
       <View style={styles.categoryRow}>
         {categories.map((cat) => {
           const IconComp = cat.icon;
@@ -146,8 +169,9 @@ export const HomeScreen: React.FC = () => {
               style={[styles.categoryCard, isActive && styles.categoryCardActive]}
               onPress={() => {
                 setActiveCategory(cat.id as any);
-                if (cat.id === 'blackbooks') handleStartCustomizing('customized-black-book');
-                else navigateTo('explore');
+                if (cat.id === 'blackbooks') {
+                  handleStartCustomizing('deluxe-black-book');
+                }
               }}
               activeOpacity={0.85}
             >
@@ -155,8 +179,10 @@ export const HomeScreen: React.FC = () => {
                 <IconComp size={22} color={isActive ? COLORS.white : COLORS.navy} strokeWidth={2.2} />
               </View>
               {cat.badge && (
-                <View style={[styles.catBadge, isActive && styles.catBadgeActive]}>
-                  <Text style={[styles.catBadgeText, isActive && styles.catBadgeTextActive]}>{cat.badge}</Text>
+                <View style={[styles.catBadge, isActive && styles.catBadgeActive, cat.badge === 'COMING SOON' && styles.catBadgeComingSoon]}>
+                  <Text style={[styles.catBadgeText, isActive && styles.catBadgeTextActive, cat.badge === 'COMING SOON' && styles.catBadgeTextComingSoon]}>
+                    {cat.badge}
+                  </Text>
                 </View>
               )}
               <Text style={[styles.categoryLabel, isActive && styles.categoryLabelActive]}>
@@ -167,13 +193,38 @@ export const HomeScreen: React.FC = () => {
         })}
       </View>
 
+      {/* ================= 2b. COMING SOON BANNER FOR EXPRESS & THESIS ================= */}
+      {activeCategory !== 'blackbooks' && (
+        <View style={styles.comingSoonBanner}>
+          <Clock size={18} color="#FBBF24" />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.comingSoonTitle}>
+              {activeCategory === 'express' ? '⚡ Express 24h Dispatch' : '🎓 Thesis & PhD Archival Binding'} - Coming Soon!
+            </Text>
+            <Text style={styles.comingSoonSubtitle}>
+              We are finalizing fast-track logistics and archival binding threads. In the meantime, the university-accredited Premium Executive Black Book is available for instant customization.
+            </Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.comingSoonActionBtn}
+            onPress={() => {
+              setActiveCategory('blackbooks');
+              handleStartCustomizing('deluxe-black-book');
+            }}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.comingSoonActionText}>Order Now</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* ================= 3. ATTRACTIVE SWIGGY STYLE SEARCH BAR ================= */}
       <View style={styles.searchBarWrap}>
         <View style={styles.searchBar}>
           <Search size={18} color={COLORS.secondaryText} style={{ marginRight: 8 }} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search 'Black Book', 'Golden Foil', 'Thesis'..."
+            placeholder="Search 'Executive Deluxe', 'Gold Foil', 'Rexine'..."
             placeholderTextColor={COLORS.mutedText}
             value={localSearch}
             onChangeText={setLocalSearch}
@@ -189,22 +240,22 @@ export const HomeScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Quick Filter Switch Button */}
+        {/* Quick Customize Action Button */}
         <TouchableOpacity 
           style={styles.quickFilterToggle}
-          onPress={() => navigateTo('explore')}
+          onPress={() => handleStartCustomizing('deluxe-black-book')}
           activeOpacity={0.85}
         >
           <SlidersHorizontal size={14} color={COLORS.navy} />
-          <Text style={styles.quickFilterToggleText}>SPECS</Text>
+          <Text style={styles.quickFilterToggleText}>CUSTOMIZE</Text>
         </TouchableOpacity>
       </View>
 
-      {/* ================= 4. PROMOTIONAL HERO BANNER ("Foodie Weekend" Style) ================= */}
+      {/* ================= 4. PROMOTIONAL HERO BANNER ================= */}
       <View style={styles.heroPromoCard}>
         <View style={styles.promoDecorativeCircleLeft}>
           <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80' }} 
+            source={{ uri: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=300&q=80' }} 
             style={styles.promoBookThumb}
           />
         </View>
@@ -217,7 +268,7 @@ export const HomeScreen: React.FC = () => {
           <Text style={styles.promoBigOffer}>Flat ₹100 OFF on 3+ Copies!</Text>
           <TouchableOpacity 
             style={styles.promoOrderNowBtn}
-            onPress={() => handleStartCustomizing('customized-black-book')}
+            onPress={() => handleStartCustomizing('deluxe-black-book')}
             activeOpacity={0.88}
           >
             <Text style={styles.promoOrderNowText}>ORDER NOW</Text>
@@ -227,37 +278,45 @@ export const HomeScreen: React.FC = () => {
 
         <View style={styles.promoDecorativeCircleRight}>
           <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=300&q=80' }} 
+            source={{ uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80' }} 
             style={styles.promoBookThumb}
           />
         </View>
       </View>
 
-      {/* ================= 5. QUICK DEAL TILES (HORIZONTAL 4 CARDS) ================= */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dealTilesRow}>
-        {dealTiles.map((tile) => {
-          const IconC = tile.icon;
-          return (
-            <TouchableOpacity 
-              key={tile.id}
-              style={styles.dealTileCard}
-              onPress={() => handleStartCustomizing('customized-black-book')}
-              activeOpacity={0.85}
-            >
-              <View style={styles.dealTileTopRow}>
-                <Text style={styles.dealTileHeading}>{tile.title}</Text>
-                <IconC size={15} color={tile.color} />
-              </View>
-              <Text style={styles.dealTileSub}>{tile.subtitle}</Text>
-              <View style={[styles.dealTileTag, { backgroundColor: `${tile.color}18` }]}>
-                <Text style={[styles.dealTileTagText, { color: tile.color }]}>{tile.tag}</Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      {/* ================= 5. QUICK DEAL TILES (SMOOTH HORIZONTAL MARQUEE) ================= */}
+      <View style={styles.marqueeSection}>
+        <View style={styles.marqueeHeaderRow}>
+          <Text style={styles.marqueeSectionTitle}>Exclusive Delivery & Packaging Perks</Text>
+          <Text style={styles.marqueeLiveIndicator}>● LIVE PERKS</Text>
+        </View>
+        <View style={styles.marqueeContainer}>
+          <Animated.View style={[styles.marqueeTrack, { transform: [{ translateX: marqueeAnim }] }]}>
+            {marqueeTiles.map((tile, index) => {
+              const IconC = tile.icon;
+              return (
+                <TouchableOpacity 
+                  key={`${tile.id}-${index}`}
+                  style={styles.dealTileCard}
+                  onPress={() => handleStartCustomizing('deluxe-black-book')}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.dealTileTopRow}>
+                    <Text style={styles.dealTileHeading} numberOfLines={1}>{tile.title}</Text>
+                    <IconC size={15} color={tile.color} />
+                  </View>
+                  <Text style={styles.dealTileSub} numberOfLines={1}>{tile.subtitle}</Text>
+                  <View style={[styles.dealTileTag, { backgroundColor: `${tile.color}18` }]}>
+                    <Text style={[styles.dealTileTagText, { color: tile.color }]}>{tile.tag}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </Animated.View>
+        </View>
+      </View>
 
-      {/* ================= 6. FILTER PILLS (HORIZONTAL ROW) ================= */}
+      {/* ================= 6. FEATURE HIGHLIGHT PILLS ================= */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterPillsRow}>
         {filterPills.map((pill) => {
           const isSelected = activeFilter === pill.id;
@@ -276,13 +335,17 @@ export const HomeScreen: React.FC = () => {
         })}
       </ScrollView>
 
-      {/* ================= 7. PRODUCT CARDS (SWIGGY FOOD/RESTAURANT STYLE) ================= */}
+      {/* ================= 7. PRODUCT CARD: ONLY PREMIUM EXECUTIVE DELUX BLACK BOOK ================= */}
       <View style={styles.productsSection}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Recommended Black Books</Text>
-          <TouchableOpacity onPress={() => navigateTo('explore')}>
-            <Text style={styles.sectionSeeAll}>See All ({BLACK_BOOK_PRODUCTS.length})</Text>
-          </TouchableOpacity>
+          <View>
+            <Text style={styles.sectionTitle}>Executive Deluxe Edition</Text>
+            <Text style={styles.sectionSubtitle}>Single University Submission & Accredited Standard</Text>
+          </View>
+          <View style={styles.accreditedBadge}>
+            <Award size={13} color="#FBBF24" />
+            <Text style={styles.accreditedBadgeText}>UNIVERSITY ACCREDITED</Text>
+          </View>
         </View>
 
         <View style={styles.productsGrid}>
@@ -476,6 +539,9 @@ const styles = StyleSheet.create({
     paddingVertical: 1.5,
     borderRadius: 6,
   },
+  catBadgeComingSoon: {
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+  },
   catBadgeActive: {
     backgroundColor: COLORS.darkOrange,
   },
@@ -484,8 +550,45 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FB923C',
   },
+  catBadgeTextComingSoon: {
+    color: '#FBBF24',
+  },
   catBadgeTextActive: {
     color: COLORS.white,
+  },
+  comingSoonBanner: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    backgroundColor: '#1E293B',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  comingSoonTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FBBF24',
+  },
+  comingSoonSubtitle: {
+    fontSize: 10.5,
+    color: '#94A3B8',
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  comingSoonActionBtn: {
+    backgroundColor: '#F59E0B',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  comingSoonActionText: {
+    color: COLORS.navy,
+    fontSize: 10,
+    fontWeight: '800',
   },
   categoryLabel: {
     fontSize: 9.5,
@@ -627,17 +730,43 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  /* 5. Deal Tiles */
-  dealTilesRow: {
+  /* 5. Deal Tiles & Marquee */
+  marqueeSection: {
+    marginTop: 18,
+  },
+  marqueeHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    marginTop: 16,
+    marginBottom: 8,
+  },
+  marqueeSectionTitle: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#CBD5E1',
+    letterSpacing: 0.3,
+  },
+  marqueeLiveIndicator: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#10B981',
+    letterSpacing: 0.5,
+  },
+  marqueeContainer: {
+    overflow: 'hidden',
+    width: '100%',
+  },
+  marqueeTrack: {
+    flexDirection: 'row',
     gap: 10,
+    paddingLeft: 16,
   },
   dealTileCard: {
-    width: 130,
+    width: 152,
     backgroundColor: '#1E293B',
     borderRadius: 14,
-    padding: 10,
+    padding: 11,
     borderWidth: 1,
     borderColor: '#334155',
   },
@@ -650,6 +779,8 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     fontWeight: '800',
     color: COLORS.white,
+    flex: 1,
+    marginRight: 4,
   },
   dealTileSub: {
     fontSize: 9.5,
@@ -714,10 +845,27 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.white,
   },
-  sectionSeeAll: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: COLORS.darkOrange,
+  sectionSubtitle: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  accreditedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+  },
+  accreditedBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#FBBF24',
+    letterSpacing: 0.4,
   },
   productsGrid: {
     gap: 16,

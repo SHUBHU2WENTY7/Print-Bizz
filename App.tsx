@@ -8,7 +8,6 @@ import { COLORS } from './src/constants/theme';
 
 import { AuthOnboardingScreen } from './src/screens/AuthOnboardingScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
-import { ExploreScreen } from './src/screens/ExploreScreen';
 import { ProductDetailsScreen } from './src/screens/ProductDetailsScreen';
 import { CustomizeScreen } from './src/screens/CustomizeScreen';
 import { DocumentUploadScreen } from './src/screens/DocumentUploadScreen';
@@ -30,7 +29,6 @@ import { ScreenName, useAppStore } from './src/store/useAppStore';
 const screens: Record<ScreenName, ComponentType> = {
   home: HomeScreen,
   auth_onboarding: AuthOnboardingScreen,
-  explore: ExploreScreen,
   product_details: ProductDetailsScreen,
   customize: CustomizeScreen,
   document_upload: DocumentUploadScreen,
@@ -47,13 +45,12 @@ const screens: Record<ScreenName, ComponentType> = {
   saved_addresses: SavedAddressesScreen,
   my_documents: MyDocumentsScreen,
   support: SupportScreen,
-  search: ExploreScreen,
+  search: HomeScreen,
 };
 
 const screenTitles: Record<ScreenName, string> = {
   home: 'Print Bizz',
   auth_onboarding: 'Student Verification & Sign-In',
-  explore: 'Explore Products',
   product_details: 'Product Details',
   customize: 'Customize Your Black Book',
   document_upload: 'Upload Document',
@@ -74,7 +71,7 @@ const screenTitles: Record<ScreenName, string> = {
 };
 
 // Bottom tabs navigation is shown on these primary screens
-const tabScreens: ScreenName[] = ['home', 'explore', 'my_orders', 'profile', 'search'];
+const tabScreens: ScreenName[] = ['home', 'my_orders', 'profile', 'search'];
 
 export default function App() {
   const currentScreen = useAppStore((state) => state.currentScreen);
@@ -92,8 +89,8 @@ export default function App() {
         <Header
           title={screenTitles[activeScreenName]}
           showBack={true}
-          showSearch={activeScreenName === 'explore' || activeScreenName === 'search'}
-          showFilter={activeScreenName === 'explore' || activeScreenName === 'search'}
+          showSearch={activeScreenName === 'search'}
+          showFilter={activeScreenName === 'search'}
         />
       )}
       <View style={styles.content}>

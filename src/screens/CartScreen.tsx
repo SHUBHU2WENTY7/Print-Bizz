@@ -74,10 +74,10 @@ export const CartScreen: React.FC = () => {
         </Text>
         <TouchableOpacity 
           style={styles.exploreBtn}
-          onPress={() => navigateTo('explore')}
+          onPress={() => navigateTo('home')}
           activeOpacity={0.85}
         >
-          <Text style={styles.exploreBtnText}>Explore Products</Text>
+          <Text style={styles.exploreBtnText}>View Products</Text>
           <ArrowRight size={16} color={COLORS.white} />
         </TouchableOpacity>
       </View>
@@ -185,7 +185,7 @@ export const CartScreen: React.FC = () => {
 
             <TouchableOpacity 
               style={styles.continueShoppingBtn}
-              onPress={() => navigateTo('explore')}
+              onPress={() => navigateTo('home')}
             >
               <Text style={styles.continueShoppingText}>+ Add More Academic Items</Text>
             </TouchableOpacity>

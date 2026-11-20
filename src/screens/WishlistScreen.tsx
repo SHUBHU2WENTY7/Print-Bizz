@@ -24,7 +24,7 @@ export const WishlistScreen: React.FC = () => {
           </View>
           <TouchableOpacity 
             style={styles.continueBtn}
-            onPress={() => navigateTo('explore')}
+            onPress={() => navigateTo('home')}
             activeOpacity={0.8}
           >
             <Text style={styles.continueBtnText}>Explore More</Text>
@@ -44,7 +44,7 @@ export const WishlistScreen: React.FC = () => {
             </Text>
             <TouchableOpacity 
               style={styles.exploreBtn}
-              onPress={() => navigateTo('explore')}
+              onPress={() => navigateTo('home')}
               activeOpacity={0.85}
             >
               <ShoppingBag size={16} color={COLORS.white} />

@@ -53,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
     if (localSearch.trim()) {
       setSearchQuery(localSearch.trim());
       addRecentSearch(localSearch.trim());
-      navigateTo('explore');
+      navigateTo('home');
     }
   };
 

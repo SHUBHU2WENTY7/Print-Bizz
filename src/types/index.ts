@@ -12,7 +12,6 @@ export type BindingType =
   | 'Golden Embossed Hardcover (Standard)'
   | 'Silver Foil Embossed Hardcover'
   | 'Premium Leatherette Rexine'
-  | 'Wire-O Spiral Binding'
   | 'Softcover Perfect Binding'
   | 'Executive Matte Obsidian';
 
@@ -79,7 +78,7 @@ export interface BlackBookProduct {
   tagline: string;
   description: string;
   detailedDescription: string;
-  category: 'Black Books' | 'Project Books' | 'Thesis Binding' | 'Spiral Binding' | 'Hardcover Binding' | 'Printing Services' | 'Stationery';
+  category: 'Black Books' | 'Project Books' | 'Thesis Binding' | 'Hardcover Binding' | 'Printing Services' | 'Stationery';
   badge?: string;
   startingPrice: number;
   originalPrice: number;

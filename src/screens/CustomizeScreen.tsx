@@ -473,7 +473,6 @@ export const CustomizeScreen: React.FC = () => {
                     { id: 'Golden Embossed Hardcover (Standard)', label: 'Golden Hardcover (Standard)' },
                     { id: 'Silver Foil Embossed Hardcover', label: 'Silver Foil Hardcover (+₹30)' },
                     { id: 'Premium Leatherette Rexine', label: 'Leatherette Deluxe Hardbound (+₹110)' },
-                    { id: 'Wire-O Spiral Binding', label: 'Wire-O Metal Spiral' },
                   ].map((b) => (
                     <TouchableOpacity
                       key={b.id}

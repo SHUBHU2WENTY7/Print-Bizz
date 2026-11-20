@@ -53,7 +53,7 @@ export const ProductDetailsScreen: React.FC = () => {
             <Text style={styles.breadcrumbLink}>Home</Text>
           </TouchableOpacity>
           <Text style={styles.breadcrumbDivider}>/</Text>
-          <TouchableOpacity onPress={() => navigateTo('explore')}>
+          <TouchableOpacity onPress={() => navigateTo('home')}>
             <Text style={styles.breadcrumbLink}>{selectedProduct.category}</Text>
           </TouchableOpacity>
           <Text style={styles.breadcrumbDivider}>/</Text>
